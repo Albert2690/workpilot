@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import apiClient, { setUnauthorizedHandler } from "../src/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const lastKnownRoleRef = useRef(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -23,8 +24,10 @@ export const AuthProvider = ({ children }) => {
       const storedUser = await AsyncStorage.getItem("userData");
       
       if (storedToken && storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        lastKnownRoleRef.current = parsedUser?.role || (await AsyncStorage.getItem("userRole"));
         setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+        setUser(parsedUser);
       }
     } catch (e) {
       console.error("Failed to load auth state", e);
@@ -33,9 +36,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const handleLogout = async () => {
+  const handleLogout = async (redirectRole) => {
     try {
-      const role = user?.role;
+      let role = redirectRole || user?.role || lastKnownRoleRef.current;
+      if (!role) {
+        const storedRole = await AsyncStorage.getItem("userRole");
+        const storedUser = await AsyncStorage.getItem("userData");
+        role = storedRole || (storedUser ? JSON.parse(storedUser)?.role : null);
+      }
+      lastKnownRoleRef.current = role;
+
       await AsyncStorage.multiRemove(["authToken", "userData", "userRole"]);
       setToken(null);
       setUser(null);
@@ -61,6 +71,7 @@ export const AuthProvider = ({ children }) => {
       await AsyncStorage.setItem("authToken", token);
       await AsyncStorage.setItem("userData", JSON.stringify(user));
       await AsyncStorage.setItem("userRole", user.role);
+      lastKnownRoleRef.current = user.role;
       setToken(token);
       setUser(user);
       

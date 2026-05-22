@@ -1,7 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
-export const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:7007/api";
+// export const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:7007/api";
+export const BASE_URL = "https://workpilot-mqlo.onrender.com/api";
 
 const apiClient = axios.create({
   baseURL: BASE_URL,

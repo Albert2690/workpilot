@@ -1,4 +1,5 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, KeyboardAvoidingView, Platform, Dimensions, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Platform, Dimensions, Pressable } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
@@ -24,6 +25,20 @@ const createEmployeess = async({name, mobile}) => {
    throw err
   }
 }
+
+const updateEmployee = async({id, name, mobile}) => {
+  try {
+    const data = {
+      name,
+      phone: Number(mobile),
+    };
+    const res = await apiClient.patch(`${apiRoutes.ADMIN.UPDATE_EMPLOYEE}/${id}`, data);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+}
+
 const fetchEmployees = async() => {
   try{
  const res = await apiClient.get(apiRoutes.ADMIN.GET_EMPLOYEES)
@@ -77,12 +92,6 @@ export default function EmployeesScreen() {
     mutationFn:createEmployeess,
     onSuccess:(data)=>{
       ToastComponent("Success",data.message)
-      if (data?.temporaryPassword) {
-        Alert.alert(
-          "Temporary Password",
-          `Share this one-time login password with the employee:\n\n${data.temporaryPassword}`
-        );
-      }
       setModalVisible(false);
       queryClient.invalidateQueries({ queryKey: ["employees"] });
     },
@@ -90,6 +99,20 @@ export default function EmployeesScreen() {
         ToastComponent("Error",error?.message || "Something went wrong")
     } 
   });
+
+  const {mutate: updateMutate, isPending: isUpdating}= useMutation({
+    mutationFn:updateEmployee,
+    onSuccess:(data)=>{
+      ToastComponent("Success",data.message)
+      setModalVisible(false);
+      setEditingId(null);
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+    },
+    onError: (error) => {
+      ToastComponent("Error", error?.response?.data?.message || error?.message || "Something went wrong")
+    }
+  });
+
   const saveEmployee = () => {
     const phoneRegex = /^[0-9]{10}$/;
 
@@ -107,7 +130,7 @@ export default function EmployeesScreen() {
     }
 
     if (editingId) {
-      ToastComponent("Info", "Editing is not implemented yet");
+      updateMutate({id: editingId, name, mobile});
     } else {
       mutate({name, mobile});
     }
@@ -223,84 +246,104 @@ export default function EmployeesScreen() {
         visible={modalVisible}
         transparent={true}
         animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
       >
-        <KeyboardAvoidingView 
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          <TouchableOpacity 
-            activeOpacity={1} 
-            onPress={() => setModalVisible(false)}
-            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' }}
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' }}>
+          <KeyboardAwareScrollView 
+            contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }}
+            keyboardShouldPersistTaps="handled"
+            bounces={false}
+            enableOnAndroid={true}
+            enableAutomaticScroll={true}
+            extraScrollHeight={Platform.select({ ios: 20, android: 80 })}
           >
-            <TouchableOpacity 
-              activeOpacity={1}
-              style={{ 
-                width: '100%', 
-                backgroundColor: '#1a0533', 
-                borderTopLeftRadius: 36, 
-                borderTopRightRadius: 36, 
-                padding: 32, 
-                paddingBottom: insets.bottom + 32,
-                borderWidth: 1, 
-                borderColor: 'rgba(255,255,255,0.1)',
-                borderBottomWidth: 0,
-              }}
+            <Pressable 
+              style={{ flexGrow: 1, justifyContent: 'flex-end' }} 
+              onPress={() => setModalVisible(false)}
             >
-              <View style={{ width: 40, height: 4, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 2, alignSelf: 'center', marginBottom: 32 }} />
+              <Pressable 
+                onPress={(e) => e.stopPropagation()}
+                style={{ 
+                  width: '100%', 
+                  backgroundColor: '#1a0533', 
+                  borderTopLeftRadius: 36, 
+                  borderTopRightRadius: 36, 
+                  padding: 32, 
+                  paddingBottom: insets.bottom + 32,
+                  borderWidth: 1, 
+                  borderColor: 'rgba(255,255,255,0.1)',
+                  borderBottomWidth: 0,
+                }}
+              >
+                <View style={{ width: 40, height: 4, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 2, alignSelf: 'center', marginBottom: 32 }} />
 
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-                <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700' }}>
-                  {editingId ? 'Edit Employee' : 'Add Employee'}
-                </Text>
-              </View>
-
-              <View style={{ marginBottom: 24 }}>
-                <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 12, marginLeft: 4, fontWeight: '700' }}>Full Name</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 20, paddingHorizontal: 20, height: 60, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}>
-                  <Feather name="user" size={20} color="rgba(255,255,255,0.4)" />
-                  <TextInput
-                    style={{ flex: 1, marginLeft: 14, color: '#fff', fontSize: 16 }}
-                    placeholder="e.g. John Doe"
-                    placeholderTextColor="rgba(255,255,255,0.25)"
-                    value={name}
-                    onChangeText={setName}
-                  />
-                </View>
-              </View>
-
-              <View style={{ marginBottom: 40 }}>
-                <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 12, marginLeft: 4, fontWeight: '700' }}>Mobile Number</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 20, paddingHorizontal: 20, height: 60, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}>
-                  <Feather name="phone" size={20} color="rgba(255,255,255,0.4)" />
-                  <TextInput
-                    style={{ flex: 1, marginLeft: 14, color: '#fff', fontSize: 16 }}
-                    placeholder="e.g. +1 555-0198"
-                    placeholderTextColor="rgba(255,255,255,0.25)"
-                    keyboardType="phone-pad"
-                    value={mobile}
-                    onChangeText={(text) => setMobile(text.replace(/[^0-9]/g, ''))}
-                    maxLength={10}
-                  />
-                </View>
-              </View>
-
-              <TouchableOpacity onPress={saveEmployee}>
-                <LinearGradient
-                  colors={['#8B5CF6', '#6D28D9']}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                  style={{ height: 60, borderRadius: 20, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', shadowColor: '#8B5CF6', shadowOpacity: 0.3, shadowRadius: 15 }}
-                >
-                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800', marginRight: 10 }}>
-                    {editingId ? 'Save Changes' : 'Create Account'}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+                  <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700' }}>
+                    {editingId ? 'Edit Employee' : 'Add Employee'}
                   </Text>
-                  <Feather name="check" size={20} color="#fff" />
-                </LinearGradient>
-              </TouchableOpacity>
+                </View>
 
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
+                <View style={{ marginBottom: 24 }}>
+                  <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 12, marginLeft: 4, fontWeight: '700' }}>Full Name</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 20, paddingHorizontal: 20, height: 60, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}>
+                    <Feather name="user" size={20} color="rgba(255,255,255,0.4)" />
+                    <TextInput
+                      style={{ flex: 1, marginLeft: 14, color: '#fff', fontSize: 16 }}
+                      placeholder="e.g. John Doe"
+                      placeholderTextColor="rgba(255,255,255,0.25)"
+                      value={name}
+                      onChangeText={setName}
+                    />
+                  </View>
+                </View>
+
+                <View style={{ marginBottom: 12 }}>
+                  <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 12, marginLeft: 4, fontWeight: '700' }}>Mobile Number</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 20, paddingHorizontal: 20, height: 60, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}>
+                    <Feather name="phone" size={20} color="rgba(255,255,255,0.4)" />
+                    <TextInput
+                      style={{ flex: 1, marginLeft: 14, color: '#fff', fontSize: 16 }}
+                      placeholder="e.g. +1 555-0198"
+                      placeholderTextColor="rgba(255,255,255,0.25)"
+                      keyboardType="phone-pad"
+                      value={mobile}
+                      onChangeText={(text) => setMobile(text.replace(/[^0-9]/g, ''))}
+                      maxLength={10}
+                    />
+                  </View>
+                </View>
+
+                {editingId ? (
+                  <View style={{ marginBottom: 28, padding: 12, borderRadius: 14, backgroundColor: 'rgba(245,158,11,0.08)', borderWidth: 1, borderColor: 'rgba(245,158,11,0.18)' }}>
+                    <Text style={{ color: '#f59e0b', fontSize: 12, fontWeight: '700', lineHeight: 17 }}>
+                      Updating the mobile number will also reset this employee password to the new mobile number.
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={{ marginBottom: 28, padding: 12, borderRadius: 14, backgroundColor: 'rgba(139,92,246,0.08)', borderWidth: 1, borderColor: 'rgba(139,92,246,0.18)' }}>
+                    <Text style={{ color: '#c495ff', fontSize: 12, fontWeight: '700', lineHeight: 17 }}>
+                      Employee login password will be the mobile number.
+                    </Text>
+                  </View>
+                )}
+
+                <TouchableOpacity onPress={saveEmployee} disabled={isPending || isUpdating}>
+                  <LinearGradient
+                    colors={['#8B5CF6', '#6D28D9']}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    style={{ height: 60, borderRadius: 20, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', shadowColor: '#8B5CF6', shadowOpacity: 0.3, shadowRadius: 15 }}
+                  >
+                    <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800', marginRight: 10 }}>
+                      {isPending || isUpdating ? 'Saving...' : editingId ? 'Save Changes' : 'Create Account'}
+                    </Text>
+                    <Feather name="check" size={20} color="#fff" />
+                  </LinearGradient>
+                </TouchableOpacity>
+
+              </Pressable>
+            </Pressable>
+          </KeyboardAwareScrollView>
+        </View>
       </Modal>
 
     </View>

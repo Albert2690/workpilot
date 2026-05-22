@@ -14,6 +14,7 @@ const apiRoutes = {
 
     GET_EMPLOYEES: "/admin/employees",
     CREATE_EMPLOYEE: "/admin/employee/create",
+    UPDATE_EMPLOYEE: "/admin/employee",
 
     CREATE_BRAND: "/admin/brand/create",
     GET_BRANDS: "/admin/brands",

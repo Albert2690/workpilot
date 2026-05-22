@@ -1,4 +1,5 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput, LayoutAnimation, Platform, UIManager, Modal, KeyboardAvoidingView, Pressable, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, LayoutAnimation, Platform, UIManager, Modal, Pressable, Alert } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -96,9 +97,9 @@ export default function BookingsScreen() {
     }
   })
 
-  // Dropdown States
-  const [isBrandDropdownOpen, setIsBrandDropdownOpen] = useState(false);
-  const [isEmployeeDropdownOpen, setIsEmployeeDropdownOpen] = useState(false);
+  // Modal States for Selection
+  const [isBrandModalOpen, setIsBrandModalOpen] = useState(false);
+  const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
 
   // Queries
   const { data: brandsData } = useQuery({
@@ -195,8 +196,8 @@ export default function BookingsScreen() {
     setWorks('');
     setTime('');
     setSelectedImages([]);
-    setIsBrandDropdownOpen(false);
-    setIsEmployeeDropdownOpen(false);
+    setIsBrandModalOpen(false);
+    setIsEmployeeModalOpen(false);
   };
 
   const handleCreateBooking = () => {
@@ -445,39 +446,43 @@ export default function BookingsScreen() {
         animationType="slide"
         onRequestClose={() => setIsAddModalVisible(false)}
       >
-        <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' }}
-          onPress={() => setIsAddModalVisible(false)}
-        >
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={{ flex: 1, justifyContent: 'flex-end' }}
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
+          <KeyboardAwareScrollView
+            contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }}
+            keyboardShouldPersistTaps="handled"
+            bounces={false}
+            enableOnAndroid={true}
+            enableAutomaticScroll={true}
+            extraScrollHeight={Platform.select({ ios: 20, android: 80 })}
           >
             <Pressable
-              style={{
-                backgroundColor: '#1a0533',
-                borderTopLeftRadius: 32,
-                borderTopRightRadius: 32,
-                paddingBottom: insets.bottom + 24,
-                paddingHorizontal: 24,
-                maxHeight: '90%'
-              }}
-              onPress={(e) => e.stopPropagation()}
+              style={{ flexGrow: 1, justifyContent: 'flex-end' }}
+              onPress={() => setIsAddModalVisible(false)}
             >
-              {/* Handle */}
-              <View style={{ width: 40, height: 4, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 2, alignSelf: 'center', marginTop: 12, marginBottom: 20 }} />
+              <Pressable
+                style={{
+                  backgroundColor: '#1a0533',
+                  borderTopLeftRadius: 32,
+                  borderTopRightRadius: 32,
+                  paddingBottom: insets.bottom + 24,
+                  paddingHorizontal: 24,
+                  width: '100%'
+                }}
+                onPress={(e) => e.stopPropagation()}
+              >
+                {/* Handle */}
+                <View style={{ width: 40, height: 4, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 2, alignSelf: 'center', marginTop: 12, marginBottom: 20 }} />
 
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700' }}>New Booking</Text>
-                <TouchableOpacity onPress={() => setIsAddModalVisible(false)}>
-                  <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center' }}>
-                    <Feather name="x" size={20} color="rgba(255,255,255,0.5)" />
-                  </View>
-                </TouchableOpacity>
-              </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                  <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700' }}>New Booking</Text>
+                  <TouchableOpacity onPress={() => setIsAddModalVisible(false)}>
+                    <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center' }}>
+                      <Feather name="x" size={20} color="rgba(255,255,255,0.5)" />
+                    </View>
+                  </TouchableOpacity>
+                </View>
 
-              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
-                <View style={{ gap: 16 }}>
+                <View style={{ gap: 16, paddingBottom: 20 }}>
                   {/* Customer Info Section */}
                   <View>
                     <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1.2 }}>Customer Information</Text>
@@ -528,73 +533,34 @@ export default function BookingsScreen() {
                         onChangeText={setEstimateAmount}
                       />
 
-                      {/* Brand Dropdown */}
-                      <View style={{ zIndex: 1000 }}>
+                      {/* Brand Dropdown replacement */}
+                      <View>
                         <TouchableOpacity
-                          onPress={() => setIsBrandDropdownOpen(!isBrandDropdownOpen)}
-                          style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: 16, color: '#fff', borderWidth: 1, borderColor: isBrandDropdownOpen ? '#c495ff' : 'rgba(255,255,255,0.08)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+                          onPress={() => setIsBrandModalOpen(true)}
+                          style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
                         >
                           <Text style={{ color: selectedBrand ? '#fff' : 'rgba(255,255,255,0.2)' }}>
                             {brandsData?.find(b => b._id === selectedBrand)?.brandName || "Select Vehicle Brand"}
                           </Text>
-                          <Feather name={isBrandDropdownOpen ? "chevron-up" : "chevron-down"} size={18} color="rgba(255,255,255,0.4)" />
+                          <Feather name="chevron-down" size={18} color="rgba(255,255,255,0.4)" />
                         </TouchableOpacity>
-
-                        {isBrandDropdownOpen && (
-                          <View style={{ backgroundColor: '#2a104d', borderRadius: 16, marginTop: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', maxHeight: 200, overflow: 'hidden' }}>
-                            <ScrollView nestedScrollEnabled>
-                              {brandsData?.map((brand) => (
-                                <TouchableOpacity
-                                  key={brand._id}
-                                  onPress={() => {
-                                    setSelectedBrand(brand._id);
-                                    setIsBrandDropdownOpen(false);
-                                  }}
-                                  style={{ padding: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)', backgroundColor: selectedBrand === brand._id ? 'rgba(139,92,246,0.2)' : 'transparent' }}
-                                >
-                                  <Text style={{ color: '#fff', fontSize: 14 }}>{brand.brandName}</Text>
-                                </TouchableOpacity>
-                              ))}
-                            </ScrollView>
-                          </View>
-                        )}
                       </View>
                     </View>
                   </View>
 
                   {/* Assignee & Complaint Section */}
                   <View style={{ flexDirection: 'row', gap: 12 }}>
-                    <View style={{ flex: 1, zIndex: 900 }}>
+                    <View style={{ flex: 1 }}>
                       <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1.2 }}>Employee</Text>
                       <TouchableOpacity
-                        onPress={() => setIsEmployeeDropdownOpen(!isEmployeeDropdownOpen)}
-                        style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: isEmployeeDropdownOpen ? '#c495ff' : 'rgba(255,255,255,0.08)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+                        onPress={() => setIsEmployeeModalOpen(true)}
+                        style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
                       >
                         <Text numberOfLines={1} style={{ color: selectedEmployee ? '#fff' : 'rgba(255,255,255,0.2)', fontSize: 13 }}>
                           {selectedEmployee ? selectedEmployee.name : "Assign"}
                         </Text>
+                        <Feather name="chevron-down" size={16} color="rgba(255,255,255,0.4)" />
                       </TouchableOpacity>
-
-                      {isEmployeeDropdownOpen && (
-                        <View style={{ backgroundColor: '#2a104d', borderRadius: 16, marginTop: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', maxHeight: 200, overflow: 'hidden' }}>
-                          <ScrollView nestedScrollEnabled>
-                            {employeesData?.map((emp) => (
-                              <TouchableOpacity
-                                key={emp._id}
-                                onPress={() => {
-                                  setSelectedEmployee(emp);
-                                  setIsEmployeeDropdownOpen(false);
-                                  Alert.alert("Employee Selected", "You can now upload up to 3 images (max 2 from gallery recommended).");
-                                }}
-                                style={{ padding: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)', backgroundColor: selectedEmployee?._id === emp._id ? 'rgba(139,92,246,0.2)' : 'transparent' }}
-                              >
-                                <Text style={{ color: '#fff', fontSize: 13 }}>{emp.name}</Text>
-                                <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>{emp.role}</Text>
-                              </TouchableOpacity>
-                            ))}
-                          </ScrollView>
-                        </View>
-                      )}
                     </View>
 
                     <View style={{ flex: 1 }}>
@@ -672,9 +638,210 @@ export default function BookingsScreen() {
                     </LinearGradient>
                   </TouchableOpacity>
                 </View>
-              </ScrollView>
+              </Pressable>
             </Pressable>
-          </KeyboardAvoidingView>
+          </KeyboardAwareScrollView>
+        </View>
+      </Modal>
+
+      {/* Brand Selection Modal */}
+      <Modal
+        visible={isBrandModalOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setIsBrandModalOpen(false)}
+      >
+        <Pressable
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}
+          onPress={() => setIsBrandModalOpen(false)}
+        >
+          <View
+            style={{
+              backgroundColor: '#1a0533',
+              borderTopLeftRadius: 32,
+              borderTopRightRadius: 32,
+              padding: 24,
+              paddingBottom: insets.bottom + 24,
+              maxHeight: '60%',
+              borderWidth: 1,
+              borderColor: 'rgba(255,255,255,0.1)',
+              borderBottomWidth: 0,
+            }}
+          >
+            <View style={{ width: 40, height: 4, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 2, alignSelf: 'center', marginBottom: 20 }} />
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700' }}>Select Brand</Text>
+              <TouchableOpacity onPress={() => setIsBrandModalOpen(false)}>
+                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="x" size={16} color="rgba(255,255,255,0.5)" />
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={{ gap: 12 }}>
+                {brandsData?.map((brand) => {
+                  const isSelected = selectedBrand === brand._id;
+                  return (
+                    <TouchableOpacity
+                      key={brand._id}
+                      onPress={() => {
+                        setSelectedBrand(brand._id);
+                        setIsBrandModalOpen(false);
+                      }}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: isSelected ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.03)',
+                        padding: 16,
+                        borderRadius: 20,
+                        borderWidth: 1,
+                        borderColor: isSelected ? '#8B5CF6' : 'rgba(255,255,255,0.08)',
+                      }}
+                    >
+                      <LinearGradient
+                        colors={isSelected ? ['#8B5CF6', '#6D28D9'] : ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.02)']}
+                        style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginRight: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}
+                      >
+                        <Feather name="truck" size={16} color={isSelected ? '#fff' : '#c495ff'} />
+                      </LinearGradient>
+                      
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>{brand.brandName}</Text>
+                      </View>
+
+                      {isSelected && (
+                        <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#8B5CF6', alignItems: 'center', justifyContent: 'center' }}>
+                          <Feather name="check" size={14} color="#fff" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Employee Selection Modal */}
+      <Modal
+        visible={isEmployeeModalOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setIsEmployeeModalOpen(false)}
+      >
+        <Pressable
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}
+          onPress={() => setIsEmployeeModalOpen(false)}
+        >
+          <View
+            style={{
+              backgroundColor: '#1a0533',
+              borderTopLeftRadius: 32,
+              borderTopRightRadius: 32,
+              padding: 24,
+              paddingBottom: insets.bottom + 24,
+              maxHeight: '60%',
+              borderWidth: 1,
+              borderColor: 'rgba(255,255,255,0.1)',
+              borderBottomWidth: 0,
+            }}
+          >
+            <View style={{ width: 40, height: 4, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 2, alignSelf: 'center', marginBottom: 20 }} />
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700' }}>Select Employee</Text>
+              <TouchableOpacity onPress={() => setIsEmployeeModalOpen(false)}>
+                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="x" size={16} color="rgba(255,255,255,0.5)" />
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={{ gap: 12 }}>
+                {/* Option for Unassigned */}
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedEmployee(null);
+                    setIsEmployeeModalOpen(false);
+                  }}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: !selectedEmployee ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.03)',
+                    padding: 16,
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    borderColor: !selectedEmployee ? '#8B5CF6' : 'rgba(255,255,255,0.08)',
+                  }}
+                >
+                  <LinearGradient
+                    colors={!selectedEmployee ? ['#8B5CF6', '#6D28D9'] : ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.02)']}
+                    style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginRight: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}
+                  >
+                    <Feather name="user-minus" size={16} color={!selectedEmployee ? '#fff' : '#c495ff'} />
+                  </LinearGradient>
+                  
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>Unassigned</Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 2 }}>Leave unassigned</Text>
+                  </View>
+
+                  {!selectedEmployee && (
+                    <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#8B5CF6', alignItems: 'center', justifyContent: 'center' }}>
+                      <Feather name="check" size={14} color="#fff" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+
+                {employeesData?.map((emp) => {
+                  const isSelected = selectedEmployee?._id === emp._id;
+                  return (
+                    <TouchableOpacity
+                      key={emp._id}
+                      onPress={() => {
+                        setSelectedEmployee(emp);
+                        setIsEmployeeModalOpen(false);
+                        Alert.alert("Employee Selected", "You can now upload up to 3 images (max 2 from gallery recommended).");
+                      }}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: isSelected ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.03)',
+                        padding: 16,
+                        borderRadius: 20,
+                        borderWidth: 1,
+                        borderColor: isSelected ? '#8B5CF6' : 'rgba(255,255,255,0.08)',
+                      }}
+                    >
+                      <LinearGradient
+                        colors={isSelected ? ['#8B5CF6', '#6D28D9'] : ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.02)']}
+                        style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginRight: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}
+                      >
+                        <Text style={{ color: isSelected ? '#fff' : '#c495ff', fontSize: 16, fontWeight: '700' }}>
+                          {emp.name?.charAt(0)?.toUpperCase()}
+                        </Text>
+                      </LinearGradient>
+                      
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>{emp.name}</Text>
+                        <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}>{emp.role || 'employee'}</Text>
+                      </View>
+
+                      {isSelected && (
+                        <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#8B5CF6', alignItems: 'center', justifyContent: 'center' }}>
+                          <Feather name="check" size={14} color="#fff" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          </View>
         </Pressable>
       </Modal>
 

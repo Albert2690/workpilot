@@ -6,11 +6,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function AdminLayout() {
   const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(insets.bottom, Platform.OS === 'ios' ? 8 : 10);
+  const tabBarHeight = 62 + bottomInset;
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+        tabBarHideOnKeyboard: true,
         tabBarActiveTintColor: '#c495ff',
         tabBarInactiveTintColor: 'rgba(255,255,255,0.4)',
         tabBarShowLabel: true,
@@ -18,15 +21,22 @@ export default function AdminLayout() {
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
-          marginBottom: Platform.OS === 'ios' ? 0 : 5,
+          marginBottom: 0,
         },
 
         tabBarStyle: {
           backgroundColor: 'rgba(15,2,32,0.95)',
           borderTopWidth: 0,
-          height: Platform.OS === 'ios' ? 80 + insets.bottom : 60,
-          paddingBottom: Platform.OS === 'ios' ? insets.bottom : 5,
-          paddingTop: 6,
+          height: tabBarHeight,
+          paddingBottom: bottomInset,
+          paddingTop: 8,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+
+        tabBarItemStyle: {
+          height: 50,
+          paddingVertical: 2,
         },
 
         // ✅ Safe background (Blur only for mobile)

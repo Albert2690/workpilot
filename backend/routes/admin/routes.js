@@ -15,6 +15,7 @@ import {
 import {
   createEmployee,
   getEmployees,
+  updateEmployee,
 } from "../../controllers/admin/employeeController.js";
 
 import {
@@ -62,6 +63,7 @@ router.patch("/booking/assign/:id", assignEmployee);
 // GET EMPLOYEES
 router.get("/employees", getEmployees);
 router.post("/employee/create", createEmployee);
+router.patch("/employee/:id", updateEmployee);
 
 
 /*

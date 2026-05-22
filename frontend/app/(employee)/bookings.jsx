@@ -1,8 +1,10 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Pressable, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Pressable, Platform, Alert } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useMemo, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../../src/api';
 import apiRoutes from '../../src/apiRoutes';
@@ -413,106 +415,125 @@ function CompleteBookingModal({
   onSubmit,
   isSubmitting,
 }) {
+  const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' }} onPress={onClose}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <Pressable
-            onPress={(event) => event.stopPropagation()}
-            style={{ backgroundColor: '#1a0533', borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 24, paddingBottom: 34, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}
-          >
-            <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.16)', alignSelf: 'center', marginBottom: 20 }} />
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
-              <View style={{ flex: 1, paddingRight: 12 }}>
-                <Text style={{ color: employeeTheme.text, fontSize: 22, fontWeight: '900' }}>Complete booking</Text>
-                <Text numberOfLines={1} style={{ color: employeeTheme.muted, fontSize: 13, marginTop: 5 }}>{booking?.vehicleName || 'Vehicle'} • {booking?.customerName || 'Customer'}</Text>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' }}>
+        <KeyboardAwareScrollView 
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+          enableOnAndroid={true}
+          enableAutomaticScroll={true}
+          extraScrollHeight={Platform.select({ ios: 20, android: 80 })}
+        >
+          <Pressable style={{ flexGrow: 1, justifyContent: 'flex-end' }} onPress={onClose}>
+            <Pressable
+              onPress={(event) => event.stopPropagation()}
+              style={{ 
+                backgroundColor: '#1a0533', 
+                borderTopLeftRadius: 30, 
+                borderTopRightRadius: 30, 
+                padding: 24, 
+                paddingBottom: insets.bottom + 24, 
+                borderWidth: 1, 
+                borderColor: 'rgba(255,255,255,0.1)',
+                width: '100%'
+              }}
+            >
+              <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.16)', alignSelf: 'center', marginBottom: 20 }} />
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
+                <View style={{ flex: 1, paddingRight: 12 }}>
+                  <Text style={{ color: employeeTheme.text, fontSize: 22, fontWeight: '900' }}>Complete booking</Text>
+                  <Text numberOfLines={1} style={{ color: employeeTheme.muted, fontSize: 13, marginTop: 5 }}>{booking?.vehicleName || 'Vehicle'} • {booking?.customerName || 'Customer'}</Text>
+                </View>
+                <TouchableOpacity onPress={onClose} style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: employeeTheme.panelStrong, alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="x" size={18} color={employeeTheme.muted} />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity onPress={onClose} style={{ width: 38, height: 38, borderRadius: 14, backgroundColor: employeeTheme.panelStrong, alignItems: 'center', justifyContent: 'center' }}>
-                <Feather name="x" size={18} color={employeeTheme.muted} />
-              </TouchableOpacity>
-            </View>
 
-            <View style={{ marginBottom: 16 }}>
-              <Text style={{ color: employeeTheme.faint, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 }}>Final amount</Text>
-              <View style={{ height: 54, borderRadius: 16, backgroundColor: employeeTheme.panelStrong, borderWidth: 1, borderColor: employeeTheme.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 15 }}>
-                <Feather name="credit-card" size={17} color={employeeTheme.muted} />
-                <TextInput
-                  value={finalAmount}
-                  onChangeText={setFinalAmount}
-                  keyboardType="numeric"
-                  placeholder="Enter final amount"
-                  placeholderTextColor="rgba(255,255,255,0.26)"
-                  style={{ flex: 1, color: employeeTheme.text, fontSize: 15, marginLeft: 12 }}
-                />
+              <View style={{ marginBottom: 16 }}>
+                <Text style={{ color: employeeTheme.faint, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 }}>Final amount</Text>
+                <View style={{ height: 54, borderRadius: 16, backgroundColor: employeeTheme.panelStrong, borderWidth: 1, borderColor: employeeTheme.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 15 }}>
+                  <Feather name="credit-card" size={17} color={employeeTheme.muted} />
+                  <TextInput
+                    value={finalAmount}
+                    onChangeText={setFinalAmount}
+                    keyboardType="numeric"
+                    placeholder="Enter final amount"
+                    placeholderTextColor="rgba(255,255,255,0.26)"
+                    style={{ flex: 1, color: employeeTheme.text, fontSize: 15, marginLeft: 12 }}
+                  />
+                </View>
               </View>
-            </View>
 
-            <View style={{ marginBottom: 18 }}>
-              <Text style={{ color: employeeTheme.faint, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 }}>Payment method</Text>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                {['cash', 'online'].map((method) => {
-                  const selected = paymentMethod === method;
-                  return (
+              <View style={{ marginBottom: 18 }}>
+                <Text style={{ color: employeeTheme.faint, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 }}>Payment method</Text>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  {['cash', 'online'].map((method) => {
+                    const selected = paymentMethod === method;
+                    return (
+                      <TouchableOpacity
+                        key={method}
+                        onPress={() => setPaymentMethod(method)}
+                        style={{
+                          flex: 1,
+                          height: 48,
+                          borderRadius: 15,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexDirection: 'row',
+                          gap: 8,
+                          backgroundColor: selected ? 'rgba(139,92,246,0.22)' : employeeTheme.panelStrong,
+                          borderWidth: 1,
+                          borderColor: selected ? 'rgba(139,92,246,0.45)' : employeeTheme.border,
+                        }}
+                      >
+                        <Feather name={method === 'cash' ? 'dollar-sign' : 'smartphone'} size={16} color={selected ? employeeTheme.accent : employeeTheme.muted} />
+                        <Text style={{ color: selected ? employeeTheme.accent : employeeTheme.muted, fontSize: 13, fontWeight: '900', textTransform: 'capitalize' }}>{method}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              <View style={{ marginBottom: 20 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <Text style={{ color: employeeTheme.faint, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8 }}>After Work Images ({afterImages.length}/2)</Text>
+                  <Text style={{ color: employeeTheme.accent, fontSize: 10, fontWeight: '800' }}>Exactly 2 required</Text>
+                </View>
+
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  {afterImages.map((image, index) => (
+                    <View key={`${image.uri}-${index}`} style={{ width: 86, height: 86, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: employeeTheme.border }}>
+                      <Image source={{ uri: image.uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+                      <TouchableOpacity onPress={() => removeAfterImage(index)} style={{ position: 'absolute', top: 5, right: 5, width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.65)', alignItems: 'center', justifyContent: 'center' }}>
+                        <Feather name="x" size={13} color="#fff" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  {afterImages.length < 2 ? (
                     <TouchableOpacity
-                      key={method}
-                      onPress={() => setPaymentMethod(method)}
-                      style={{
-                        flex: 1,
-                        height: 48,
-                        borderRadius: 15,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexDirection: 'row',
-                        gap: 8,
-                        backgroundColor: selected ? 'rgba(139,92,246,0.22)' : employeeTheme.panelStrong,
-                        borderWidth: 1,
-                        borderColor: selected ? 'rgba(139,92,246,0.45)' : employeeTheme.border,
-                      }}
+                      onPress={pickAfterImages}
+                      style={{ width: 86, height: 86, borderRadius: 16, backgroundColor: 'rgba(139,92,246,0.08)', borderWidth: 1.5, borderColor: 'rgba(139,92,246,0.3)', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' }}
                     >
-                      <Feather name={method === 'cash' ? 'dollar-sign' : 'smartphone'} size={16} color={selected ? employeeTheme.accent : employeeTheme.muted} />
-                      <Text style={{ color: selected ? employeeTheme.accent : employeeTheme.muted, fontSize: 13, fontWeight: '900', textTransform: 'capitalize' }}>{method}</Text>
+                      <Feather name="camera" size={24} color={employeeTheme.accent} />
+                      <Text style={{ color: employeeTheme.accent, fontSize: 10, marginTop: 5, fontWeight: '800' }}>Add</Text>
                     </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-
-            <View style={{ marginBottom: 20 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <Text style={{ color: employeeTheme.faint, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8 }}>After Work Images ({afterImages.length}/2)</Text>
-                <Text style={{ color: employeeTheme.accent, fontSize: 10, fontWeight: '800' }}>Exactly 2 required</Text>
+                  ) : null}
+                </View>
               </View>
 
-              <View style={{ flexDirection: 'row', gap: 12 }}>
-                {afterImages.map((image, index) => (
-                  <View key={`${image.uri}-${index}`} style={{ width: 86, height: 86, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: employeeTheme.border }}>
-                    <Image source={{ uri: image.uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
-                    <TouchableOpacity onPress={() => removeAfterImage(index)} style={{ position: 'absolute', top: 5, right: 5, width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.65)', alignItems: 'center', justifyContent: 'center' }}>
-                      <Feather name="x" size={13} color="#fff" />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-                {afterImages.length < 2 ? (
-                  <TouchableOpacity
-                    onPress={pickAfterImages}
-                    style={{ width: 86, height: 86, borderRadius: 16, backgroundColor: 'rgba(139,92,246,0.08)', borderWidth: 1.5, borderColor: 'rgba(139,92,246,0.3)', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <Feather name="camera" size={24} color={employeeTheme.accent} />
-                    <Text style={{ color: employeeTheme.accent, fontSize: 10, marginTop: 5, fontWeight: '800' }}>Add</Text>
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-            </View>
-
-            <TouchableOpacity onPress={onSubmit} disabled={isSubmitting}>
-              <View style={{ height: 56, borderRadius: 18, backgroundColor: '#8B5CF6', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, opacity: isSubmitting ? 0.65 : 1 }}>
-                <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900' }}>{isSubmitting ? 'Uploading...' : 'Upload proof & complete'}</Text>
-                {!isSubmitting ? <Feather name="upload-cloud" size={18} color="#fff" /> : null}
-              </View>
-            </TouchableOpacity>
+              <TouchableOpacity onPress={onSubmit} disabled={isSubmitting}>
+                <View style={{ height: 56, borderRadius: 18, backgroundColor: '#8B5CF6', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, opacity: isSubmitting ? 0.65 : 1 }}>
+                  <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900' }}>{isSubmitting ? 'Uploading...' : 'Upload proof & complete'}</Text>
+                  {!isSubmitting ? <Feather name="upload-cloud" size={18} color="#fff" /> : null}
+                </View>
+              </TouchableOpacity>
+            </Pressable>
           </Pressable>
-        </KeyboardAvoidingView>
-      </Pressable>
+        </KeyboardAwareScrollView>
+      </View>
     </Modal>
   );
 }

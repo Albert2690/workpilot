@@ -1,7 +1,8 @@
 import { 
   View, Text, TextInput, TouchableOpacity, 
-  KeyboardAvoidingView, Platform, ScrollView, Animated, Dimensions, Alert
+  Platform, Animated, Dimensions, Alert
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useState, useRef, useEffect } from 'react';
@@ -56,12 +57,8 @@ export default function EmployeeLoginScreen() {
       <View style={{ position: 'absolute', top: -100, left: -50, width: 300, height: 300, borderRadius: 150, backgroundColor: '#8B5CF6', opacity: 0.1 }} />
       <View style={{ position: 'absolute', bottom: -50, right: -50, width: 250, height: 250, borderRadius: 125, backgroundColor: '#6D28D9', opacity: 0.15 }} />
 
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView 
-          contentContainerStyle={{ 
+      <KeyboardAwareScrollView 
+        contentContainerStyle={{ 
             flexGrow: 1, 
             justifyContent: 'center', 
             padding: 24,
@@ -69,6 +66,10 @@ export default function EmployeeLoginScreen() {
             paddingBottom: insets.bottom + 20
           }} 
           showsVerticalScrollIndicator={false}
+          enableOnAndroid={true}
+          enableAutomaticScroll={true}
+          extraScrollHeight={Platform.select({ ios: 20, android: 80 })}
+          keyboardShouldPersistTaps="handled"
         >
           
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], alignItems: 'center', marginBottom: 48 }}>
@@ -140,8 +141,7 @@ export default function EmployeeLoginScreen() {
             </TouchableOpacity>
           </Animated.View>
 
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </View>
   );
 }

@@ -1,13 +1,44 @@
 import User from "../../models/User.js";
 import bcrypt from "bcryptjs";
 
+const pendingEmployeeCreates = new Set();
 
 export const createEmployee = async (req, res) => {
+  let requestDedupeKey;
+
   try {
-    const { name, phone } = req.body;
+    const { name, phone, baseSalary } = req.body;
+    const normalizedName = name?.trim();
+    const normalizedPhone = phone?.toString().trim();
+    const parsedBaseSalary = baseSalary ? Number(baseSalary) : 0;
+
+    if (!normalizedName || !normalizedPhone) {
+      return res.status(400).json({
+        success: false,
+        message: "Name and phone are required",
+      });
+    }
+
+    if (!/^\d{10}$/.test(normalizedPhone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid 10-digit mobile number",
+      });
+    }
+
+    requestDedupeKey = `${req.user._id}:${normalizedPhone}`;
+
+    if (pendingEmployeeCreates.has(requestDedupeKey)) {
+      return res.status(409).json({
+        success: false,
+        message: "Employee creation is already in progress. Please wait.",
+      });
+    }
+
+    pendingEmployeeCreates.add(requestDedupeKey);
 
     // Check existing user
-    const existingUser = await User.findOne({ phone });
+    const existingUser = await User.findOne({ phone: normalizedPhone });
 
     if (existingUser) {
       return res.status(400).json({
@@ -16,14 +47,15 @@ export const createEmployee = async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(phone.toString(), 10);
+    const hashedPassword = await bcrypt.hash(normalizedPhone, 10);
 
     // Create employee
     const employee = await User.create({
-      name,
-      phone,
+      name: normalizedName,
+      phone: normalizedPhone,
       password: hashedPassword,
       role: "employee",
+      baseSalary: parsedBaseSalary,
 
       // Logged-in admin id
       createdBy: req.user._id,
@@ -38,21 +70,33 @@ export const createEmployee = async (req, res) => {
         name: employee.name,
         phone: employee.phone,
         role: employee.role,
+        baseSalary: employee.baseSalary,
         createdBy: employee.createdBy,
       },
     });
 
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Phone number already exists",
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: error.message,
     });
+  } finally {
+    if (requestDedupeKey) {
+      pendingEmployeeCreates.delete(requestDedupeKey);
+    }
   }
 };
 
 export const getEmployees = async (req, res) => {
   try {
-    const employees = await User.find({ role: "employee",createdBy: req.user._id }).select("-password");
+    const employees = await User.find({ role: "employee", createdBy: req.user._id, isActive: true }).select("-password");
     res.status(200).json({ success: true, employees });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -61,12 +105,22 @@ export const getEmployees = async (req, res) => {
 
 export const updateEmployee = async (req, res) => {
   try {
-    const { name, phone } = req.body;
+    const { name, phone, baseSalary } = req.body;
+    const normalizedName = name?.trim();
+    const normalizedPhone = phone?.toString().trim();
+    const parsedBaseSalary = baseSalary ? Number(baseSalary) : 0;
 
-    if (!name || !phone) {
+    if (!normalizedName || !normalizedPhone) {
       return res.status(400).json({
         success: false,
         message: "Name and phone are required",
+      });
+    }
+
+    if (!/^\d{10}$/.test(normalizedPhone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid 10-digit mobile number",
       });
     }
 
@@ -74,6 +128,7 @@ export const updateEmployee = async (req, res) => {
       _id: req.params.id,
       role: "employee",
       createdBy: req.user._id,
+      isActive: true,
     });
 
     if (!employee) {
@@ -84,7 +139,7 @@ export const updateEmployee = async (req, res) => {
     }
 
     const existingUser = await User.findOne({
-      phone,
+      phone: normalizedPhone,
       _id: { $ne: employee._id },
     });
 
@@ -95,9 +150,10 @@ export const updateEmployee = async (req, res) => {
       });
     }
 
-    employee.name = name;
-    employee.phone = phone;
-    employee.password = await bcrypt.hash(phone.toString(), 10);
+    employee.name = normalizedName;
+    employee.phone = normalizedPhone;
+    employee.baseSalary = parsedBaseSalary;
+    employee.password = await bcrypt.hash(normalizedPhone, 10);
     await employee.save();
 
     res.status(200).json({
@@ -108,8 +164,47 @@ export const updateEmployee = async (req, res) => {
         name: employee.name,
         phone: employee.phone,
         role: employee.role,
+        baseSalary: employee.baseSalary,
         createdBy: employee.createdBy,
       },
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Phone number already exists",
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const deleteEmployee = async (req, res) => {
+  try {
+    const employee = await User.findOne({
+      _id: req.params.id,
+      role: "employee",
+      createdBy: req.user._id,
+      isActive: true,
+    });
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
+    }
+
+    employee.isActive = false;
+    await employee.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Employee deleted successfully",
     });
   } catch (error) {
     res.status(500).json({

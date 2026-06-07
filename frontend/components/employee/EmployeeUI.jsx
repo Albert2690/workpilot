@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Animated, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
@@ -21,7 +21,7 @@ export const employeeTheme = {
   warning: '#f59e0b',
 };
 
-export function EmployeeShell({ children, scroll = true, contentStyle, topPadding = 24 }) {
+export function EmployeeShell({ children, scroll = true, contentStyle, topPadding = 24, onRefresh, refreshing = false }) {
   const insets = useSafeAreaInsets();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -50,7 +50,20 @@ export function EmployeeShell({ children, scroll = true, contentStyle, topPaddin
       <View style={{ position: 'absolute', bottom: 160, left: -80, width: 260, height: 260, borderRadius: 130, backgroundColor: employeeTheme.purpleDark, opacity: 0.08 }} />
 
       {scroll ? (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+        <ScrollView 
+          showsVerticalScrollIndicator={false} 
+          contentContainerStyle={{ flexGrow: 1 }}
+          refreshControl={
+            onRefresh ? (
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={employeeTheme.accent}
+                colors={[employeeTheme.accent]}
+              />
+            ) : undefined
+          }
+        >
           {body}
         </ScrollView>
       ) : body}
@@ -136,7 +149,22 @@ export function EmptyState({ icon = 'inbox', title, message, actionLabel, onActi
 }
 
 export function SkeletonBlock({ height = 80, width = '100%', radius = 18, style }) {
-  return <View style={[{ height, width, borderRadius: radius, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }, style]} />;
+  const anim = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 0.3, duration: 800, useNativeDriver: true })
+      ])
+    ).start();
+  }, [anim]);
+
+  return (
+    <Animated.View 
+      style={[{ height, width, borderRadius: radius, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', opacity: anim }, style]} 
+    />
+  );
 }
 
 export function BookingCard({ booking, compact = false }) {

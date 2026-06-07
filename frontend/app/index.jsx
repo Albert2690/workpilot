@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { View, ActivityIndicator } from "react-native";
 
 export default function Index() {
-  const { isAuthenticated, user, isLoading } = useAuth();
+  const { isAuthenticated, user, isLoading, lastRole } = useAuth();
 
   if (isLoading) {
     return (
@@ -21,5 +21,9 @@ export default function Index() {
     }
   }
 
+  if (lastRole === "employee") {
+    return <Redirect href="/(auth)/employee-login" />;
+  }
+  
   return <Redirect href="/(auth)/admin-login" />;
 }

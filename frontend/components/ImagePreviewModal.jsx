@@ -1,92 +1,208 @@
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Animated, Modal, Pressable, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { GestureHandlerRootView, PinchGestureHandler, State, TapGestureHandler } from 'react-native-gesture-handler';
+
+const MIN_SCALE = 1;
+const MAX_SCALE = 4;
+const DOUBLE_TAP_SCALE = 2.5;
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 export default function ImagePreviewModal({ visible, imageUrl, title, onClose }) {
-  const [zoom, setZoom] = useState(1);
+  const pinchRef = useRef(null);
+  const doubleTapRef = useRef(null);
+
+  const baseScale = useRef(new Animated.Value(1)).current;
+  const pinchScale = useRef(new Animated.Value(1)).current;
+  const scaleValueRef = useRef(1);
+
+  const hintOpacity = useRef(new Animated.Value(0)).current;
+  const [layoutReady, setLayoutReady] = useState(false);
+
+  const animatedScale = Animated.multiply(baseScale, pinchScale);
+
+  const resetScale = useCallback(() => {
+    scaleValueRef.current = 1;
+    baseScale.setValue(1);
+    pinchScale.setValue(1);
+  }, [baseScale, pinchScale]);
+
+  // const animateToScale = (nextScale) => {
+  //   const clampedScale = clamp(nextScale, MIN_SCALE, MAX_SCALE);
+  //   scaleValueRef.current = clampedScale;
+  //   Animated.spring(baseScale, {
+  //     toValue: clampedScale,
+  //     useNativeDriver: true,
+  //     friction: 8,
+  //     tension: 70,
+  //   }).start(() => {
+  //     pinchScale.setValue(1);
+  //   });
+  // };
+
+  const animateToScale = (targetScale, currentTotalScale) => {
+    const clampedScale = clamp(targetScale, MIN_SCALE, MAX_SCALE);
+    if (currentTotalScale !== undefined) {
+      baseScale.setValue(currentTotalScale);
+    }
+    pinchScale.setValue(1);
+    scaleValueRef.current = clampedScale;
+
+    Animated.spring(baseScale, {
+      toValue: clampedScale,
+      useNativeDriver: true,
+      friction: 8,
+      tension: 70,
+    }).start();
+  };
 
   useEffect(() => {
-    if (visible) setZoom(1);
-  }, [visible, imageUrl]);
+    if (visible) {
+      resetScale();
+      setLayoutReady(false);
 
-  const zoomIn = () => setZoom((value) => Math.min(3, Number((value + 0.25).toFixed(2))));
-  const zoomOut = () => setZoom((value) => Math.max(1, Number((value - 0.25).toFixed(2))));
-  const resetZoom = () => setZoom(1);
+      hintOpacity.setValue(1);
+      Animated.timing(hintOpacity, {
+        toValue: 0,
+        duration: 500,
+        delay: 1800,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible, imageUrl, hintOpacity, resetScale]);
+
+  const handlePinchEvent = Animated.event(
+    [{ nativeEvent: { scale: pinchScale } }],
+    { useNativeDriver: true }
+  );
+
+  const handlePinchStateChange = ({ nativeEvent }) => {
+    if (nativeEvent.oldState === State.ACTIVE) {
+      const currentTotalScale = scaleValueRef.current * nativeEvent.scale;
+      animateToScale(currentTotalScale, currentTotalScale);
+    }
+  };
+
+  const handleDoubleTap = () => {
+    const targetScale = scaleValueRef.current > 1 ? 1 : DOUBLE_TAP_SCALE;
+    animateToScale(targetScale);
+  };
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.92)' }}>
-        <View style={{ paddingTop: 56, paddingHorizontal: 20, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text numberOfLines={1} style={{ color: '#fff', fontSize: 16, fontWeight: '800', flex: 1, paddingRight: 12 }}>
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.92)' }}>
+        <View
+          style={{
+            paddingTop: 56,
+            paddingHorizontal: 20,
+            paddingBottom: 14,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Text
+            numberOfLines={1}
+            style={{
+              color: '#fff',
+              fontSize: 16,
+              fontWeight: '800',
+              flex: 1,
+              paddingRight: 12,
+            }}
+          >
             {title || 'Image preview'}
           </Text>
+
           <Pressable
             onPress={onClose}
-            style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' }}
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: 14,
+              backgroundColor: 'rgba(255,255,255,0.12)',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
             <Feather name="x" size={21} color="#fff" />
           </Pressable>
         </View>
 
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ flexGrow: 1, padding: 16, alignItems: 'center', justifyContent: 'center' }}
-          maximumZoomScale={3}
-          minimumZoomScale={1}
-          showsVerticalScrollIndicator={false}
-          showsHorizontalScrollIndicator={false}
-          bouncesZoom
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 110,
+            alignSelf: 'center',
+            zIndex: 20,
+            backgroundColor: 'rgba(0,0,0,0.45)',
+            paddingHorizontal: 14,
+            paddingVertical: 8,
+            borderRadius: 999,
+            opacity: hintOpacity,
+          }}
         >
-          <View style={{ width: '100%', height: 640, maxHeight: '100%', alignItems: 'center', justifyContent: 'center' }}>
-            {imageUrl ? (
-              <Image
-                source={{ uri: imageUrl }}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  borderRadius: 18,
-                  transform: [{ scale: zoom }],
-                }}
-                contentFit="contain"
-                transition={150}
-              />
-            ) : null}
-          </View>
-        </ScrollView>
+          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>
+            Pinch or double-tap to zoom
+          </Text>
+        </Animated.View>
 
-        <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 28, flexDirection: 'row', justifyContent: 'center', gap: 10 }}>
-          <ZoomButton icon="minus" onPress={zoomOut} disabled={zoom <= 1} />
-          <Pressable
-            onPress={resetZoom}
-            style={{ minWidth: 74, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12 }}
+        <View
+          style={{ flex: 1, padding: 16 }}
+          onLayout={() => setLayoutReady(true)}
+        >
+          <TapGestureHandler
+            ref={doubleTapRef}
+            numberOfTaps={2}
+            maxDelayMs={250}
+            onActivated={handleDoubleTap}
+            waitFor={pinchRef}
           >
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>{Math.round(zoom * 100)}%</Text>
-          </Pressable>
-          <ZoomButton icon="plus" onPress={zoomIn} disabled={zoom >= 3} />
+            <Animated.View style={{ flex: 1 }}>
+              <PinchGestureHandler
+                ref={pinchRef}
+                onGestureEvent={handlePinchEvent}
+                onHandlerStateChange={handlePinchStateChange}
+                simultaneousHandlers={doubleTapRef}
+              >
+                <Animated.View
+                  style={{
+                    flex: 1,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: layoutReady ? 1 : 0,
+                  }}
+                >
+                  {imageUrl ? (
+                    <Animated.View
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        transform: [{ scale: animatedScale }],
+                      }}
+                    >
+                      <Image
+                        source={{ uri: imageUrl }}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: 18,
+                          backgroundColor: 'rgba(255,255,255,0.04)',
+                        }}
+                        contentFit="contain"
+                        transition={150}
+                      />
+                    </Animated.View>
+                  ) : null}
+                </Animated.View>
+              </PinchGestureHandler>
+            </Animated.View>
+          </TapGestureHandler>
         </View>
-      </View>
+      </GestureHandlerRootView>
     </Modal>
-  );
-}
-
-function ZoomButton({ icon, onPress, disabled }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      style={{
-        width: 44,
-        height: 44,
-        borderRadius: 14,
-        backgroundColor: disabled ? 'rgba(255,255,255,0.06)' : 'rgba(139,92,246,0.28)',
-        borderWidth: 1,
-        borderColor: disabled ? 'rgba(255,255,255,0.08)' : 'rgba(196,149,255,0.36)',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <Feather name={icon} size={18} color={disabled ? 'rgba(255,255,255,0.35)' : '#fff'} />
-    </Pressable>
   );
 }

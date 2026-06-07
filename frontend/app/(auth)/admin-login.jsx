@@ -1,6 +1,6 @@
 import { 
   View, Text, TextInput, TouchableOpacity, 
-  Platform, Animated, Dimensions, Alert
+  Platform, Animated, Alert
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,8 +9,6 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
-
-const { height } = Dimensions.get('window');
 
 export default function AdminLoginScreen() {
   const [phone, setPhone] = useState('');
@@ -29,7 +27,7 @@ export default function AdminLoginScreen() {
       Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
       Animated.spring(slideAnim, { toValue: 0, tension: 50, friction: 8, useNativeDriver: true }),
     ]).start();
-  }, []);
+  }, [fadeAnim, slideAnim]);
 
   const handleSignIn = () => {
     if (!phone || !password) {

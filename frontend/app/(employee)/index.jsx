@@ -1,5 +1,6 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, RefreshControl } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import apiClient from '../../src/api';
@@ -21,44 +22,25 @@ const fetchAssignedBookings = async () => {
   return res.data.bookings || [];
 };
 
-const mockBookings = [
-  {
-    _id: 'mock-1',
-    customerName: 'Arjun Menon',
-    vehicleName: 'Swift Dzire',
-    vehicleNumber: 'KL 07 BK 2190',
-    complaintType: 'Minor',
-    description: 'Brake inspection and oil service',
-    status: 'assigned',
-    estimateAmount: 3400,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    _id: 'mock-2',
-    customerName: 'Nisha Rao',
-    vehicleName: 'Honda City',
-    vehicleNumber: 'KA 03 MN 8811',
-    complaintType: 'Low',
-    description: 'General service',
-    status: 'completed',
-    estimateAmount: 2800,
-    finalAmount: 2950,
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-];
-
 const currency = (value) => `₹${Number(value || 0).toLocaleString('en-IN')}`;
 
 export default function EmployeeDashboard() {
   const router = useRouter();
   const { user } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['employee-bookings'],
     queryFn: fetchAssignedBookings,
   });
 
-  const bookings = data?.length ? data : isError ? mockBookings : data || [];
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
+
+  const bookings = data || [];
   const total = bookings.length;
   const completed = bookings.filter((item) => item.status === 'completed').length;
   const pending = bookings.filter((item) => ['pending', 'assigned', 'in_progress'].includes(item.status)).length;
@@ -67,7 +49,7 @@ export default function EmployeeDashboard() {
   const completionPercent = total ? Math.round((completed / total) * 100) : 0;
 
   return (
-    <EmployeeShell>
+    <EmployeeShell onRefresh={onRefresh} refreshing={refreshing}>
       <ScreenHeader
         eyebrow="Employee Panel"
         title={`Hi, ${user?.name || 'Employee'}`}
@@ -83,9 +65,9 @@ export default function EmployeeDashboard() {
       />
 
       {isError ? (
-        <View style={{ marginBottom: 16, padding: 14, borderRadius: 18, backgroundColor: 'rgba(245,158,11,0.08)', borderWidth: 1, borderColor: 'rgba(245,158,11,0.18)' }}>
-          <Text style={{ color: employeeTheme.warning, fontSize: 12, fontWeight: '700' }}>
-            Assigned booking API is unavailable. Showing local mock data for layout preview.
+        <View style={{ marginBottom: 16, padding: 14, borderRadius: 18, backgroundColor: 'rgba(239,68,68,0.08)', borderWidth: 1, borderColor: 'rgba(239,68,68,0.18)' }}>
+          <Text style={{ color: employeeTheme.danger, fontSize: 12, fontWeight: '700' }}>
+            Unable to load assigned bookings. Please refresh.
           </Text>
         </View>
       ) : null}

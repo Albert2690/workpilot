@@ -22,10 +22,17 @@ export const AuthProvider = ({ children }) => {
     try {
       const storedToken = await AsyncStorage.getItem("authToken");
       const storedUser = await AsyncStorage.getItem("userData");
+      const storedLastRole = await AsyncStorage.getItem("lastUserRole");
+      
+      if (storedLastRole) {
+        lastKnownRoleRef.current = storedLastRole;
+      }
       
       if (storedToken && storedUser) {
         const parsedUser = JSON.parse(storedUser);
-        lastKnownRoleRef.current = parsedUser?.role || (await AsyncStorage.getItem("userRole"));
+        if (!storedLastRole) {
+          lastKnownRoleRef.current = parsedUser?.role || (await AsyncStorage.getItem("userRole"));
+        }
         setToken(storedToken);
         setUser(parsedUser);
       }
@@ -61,6 +68,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateStoredUser = async (updatedUser) => {
+    if (!updatedUser) return;
+    await AsyncStorage.setItem("userData", JSON.stringify(updatedUser));
+    await AsyncStorage.setItem("userRole", updatedUser.role);
+    lastKnownRoleRef.current = updatedUser.role;
+    setUser(updatedUser);
+  };
+
   const loginMutation = useMutation({
     mutationFn: async ({ phone, password }) => {
       const response = await apiClient.post("/common/login", { phone, password });
@@ -71,6 +86,7 @@ export const AuthProvider = ({ children }) => {
       await AsyncStorage.setItem("authToken", token);
       await AsyncStorage.setItem("userData", JSON.stringify(user));
       await AsyncStorage.setItem("userRole", user.role);
+      await AsyncStorage.setItem("lastUserRole", user.role);
       lastKnownRoleRef.current = user.role;
       setToken(token);
       setUser(user);
@@ -95,6 +111,8 @@ export const AuthProvider = ({ children }) => {
         isLoggingIn: loginMutation.isPending,
         loginError: loginMutation.error,
         logout: handleLogout,
+        updateStoredUser,
+        lastRole: lastKnownRoleRef.current,
       }}
     >
       {children}

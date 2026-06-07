@@ -10,6 +10,7 @@ import {
   startBooking,
   completeBooking,
 } from "../../controllers/user/bookingUserController.js";
+import { employeeProfileUpdate } from "../../controllers/authController.js";
 
 const router = express.Router();
 
@@ -35,5 +36,8 @@ router.patch(
   upload.array("afterImages", 2),
   completeBooking
 );
+
+// PROFILE
+router.put("/profile-update", employeeProfileUpdate);
 
 export default router;

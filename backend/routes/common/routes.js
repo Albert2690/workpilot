@@ -1,6 +1,6 @@
 import express from "express";
 
-import { login } from "../../controllers/authController.js";
+import { login, updateProfile } from "../../controllers/authController.js";
 
 import protect from "../../middleware/authMiddleware.js";
 
@@ -16,5 +16,7 @@ router.get("/profile", protect, (req, res) => {
     user: req.user,
   });
 });
+
+router.patch("/profile", protect, updateProfile);
 
 export default router;

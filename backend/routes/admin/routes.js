@@ -14,6 +14,7 @@ import {
 
 import {
   createEmployee,
+  deleteEmployee,
   getEmployees,
   updateEmployee,
 } from "../../controllers/admin/employeeController.js";
@@ -23,6 +24,11 @@ import {
   getBrands,
 } from "../../controllers/admin/brandController.js";
 import { createAdmin } from "../../controllers/authController.js";
+import {
+  createPayroll,
+  getEmployeePayrolls,
+  deletePayroll,
+} from "../../controllers/admin/payrollController.js";
 
 const router = express.Router();
 
@@ -64,7 +70,21 @@ router.patch("/booking/assign/:id", assignEmployee);
 router.get("/employees", getEmployees);
 router.post("/employee/create", createEmployee);
 router.patch("/employee/:id", updateEmployee);
+router.delete("/employee/:id", deleteEmployee);
 
+
+/*
+|--------------------------------------------------------------------------
+| PAYROLL
+|--------------------------------------------------------------------------
+*/
+
+// CREATE PAYROLL
+router.post("/payroll/create", createPayroll);
+// GET PAYROLLS
+router.get("/payroll/employee/:employeeId", getEmployeePayrolls);
+// DELETE PAYROLL
+router.delete("/payroll/:id", deletePayroll);
 
 /*
 |--------------------------------------------------------------------------

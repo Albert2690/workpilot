@@ -1,10 +1,10 @@
 import '../global.css';
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { useEffect } from 'react';
-import { useRouter, useSegments } from 'expo-router';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,12 +49,14 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <SafeAreaProvider>
-          <RootLayoutNav />
-        </SafeAreaProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <SafeAreaProvider>
+            <RootLayoutNav />
+          </SafeAreaProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }

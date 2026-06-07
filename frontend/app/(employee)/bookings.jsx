@@ -1,15 +1,16 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Pressable, Platform, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Pressable, Platform, Alert, RefreshControl, ActivityIndicator } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../../src/api';
 import apiRoutes from '../../src/apiRoutes';
 import { appendImageToFormData } from '../../src/formDataImages';
 import ImagePreviewModal from '../../components/ImagePreviewModal';
+import ToastComponent from '../../components/ToastComponent';
 import {
   EmployeeShell,
   EmptyState,
@@ -60,13 +61,21 @@ export default function EmployeeBookings() {
     queryFn: fetchAssignedBookings,
   });
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
+
   const invalidateBookings = () => queryClient.invalidateQueries({ queryKey: ['employee-bookings'] });
 
   const startMutation = useMutation({
     mutationFn: startBooking,
     onSuccess: invalidateBookings,
     onError: (error) => {
-      Alert.alert('Start Failed', error?.response?.data?.message || 'Unable to start booking.');
+      ToastComponent('Start Failed', error?.response?.data?.message || 'Unable to start booking.');
     },
   });
 
@@ -77,7 +86,7 @@ export default function EmployeeBookings() {
       invalidateBookings();
     },
     onError: (error) => {
-      Alert.alert('Completion Failed', error?.response?.data?.message || 'Unable to complete booking.');
+      ToastComponent('Completion Failed', error?.response?.data?.message || 'Unable to complete booking.');
     },
   });
 
@@ -124,15 +133,27 @@ export default function EmployeeBookings() {
     setAfterImages([]);
   };
 
-  const pickAfterImages = async () => {
-    if (afterImages.length >= 2) {
-      Alert.alert('Limit Reached', 'Only 2 after-work images are allowed.');
+  const handleLaunchCamera = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      ToastComponent('Permission Denied', 'Camera permission is required to take photos.');
       return;
     }
 
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setAfterImages((current) => [...current, ...result.assets].slice(0, 2));
+    }
+  };
+
+  const handleLaunchGallery = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'Gallery permission is required to upload proof images.');
+      ToastComponent('Permission Denied', 'Gallery permission is required to upload proof images.');
       return;
     }
 
@@ -148,6 +169,24 @@ export default function EmployeeBookings() {
     }
   };
 
+  const pickAfterImages = () => {
+    if (afterImages.length >= 2) {
+      ToastComponent('Limit Reached', 'Only 2 after-work images are allowed.');
+      return;
+    }
+
+    Alert.alert(
+      'Select Image Source',
+      'Choose how you want to upload the after-work image',
+      [
+        { text: 'Take Photo', onPress: handleLaunchCamera },
+        { text: 'Choose from Gallery', onPress: handleLaunchGallery },
+        { text: 'Cancel', style: 'cancel' }
+      ],
+      { cancelable: true }
+    );
+  };
+
   const removeAfterImage = (index) => {
     setAfterImages((current) => current.filter((_, imageIndex) => imageIndex !== index));
   };
@@ -155,15 +194,15 @@ export default function EmployeeBookings() {
   const handleComplete = () => {
     if (!completeTarget?._id) return;
     if (!finalAmount || Number.isNaN(Number(finalAmount))) {
-      Alert.alert('Final Amount Required', 'Enter a valid final amount.');
+      ToastComponent('Final Amount Required', 'Enter a valid final amount.');
       return;
     }
     if (afterImages.length !== 2) {
-      Alert.alert('Images Required', 'Please upload exactly 2 after-work images.');
+      ToastComponent('Images Required', 'Please upload exactly 2 after-work images.');
       return;
     }
     if (!['cash', 'online'].includes(paymentMethod)) {
-      Alert.alert('Payment Method Required', 'Select cash or online payment.');
+      ToastComponent('Payment Method Required', 'Select cash or online payment.');
       return;
     }
 
@@ -176,7 +215,11 @@ export default function EmployeeBookings() {
   };
 
   return (
-    <EmployeeShell contentStyle={{ paddingHorizontal: 0 }}>
+    <EmployeeShell 
+      contentStyle={{ paddingHorizontal: 0 }}
+      onRefresh={onRefresh}
+      refreshing={refreshing}
+    >
       <View style={{ paddingHorizontal: 24 }}>
         <ScreenHeader
           title="Bookings"
@@ -234,8 +277,8 @@ export default function EmployeeBookings() {
 
       <View style={{ paddingHorizontal: 24 }}>
         {isLoading ? (
-          <View style={{ gap: 12 }}>
-            {[1, 2, 3, 4].map((item) => <SkeletonBlock key={item} height={148} />)}
+          <View style={{ paddingVertical: 40, alignItems: 'center', justifyContent: 'center' }}>
+            <ActivityIndicator size="large" color={employeeTheme.accent} />
           </View>
         ) : isError ? (
           <EmptyState

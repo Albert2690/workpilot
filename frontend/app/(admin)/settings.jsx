@@ -1,16 +1,27 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import apiClient from '../../src/api';
+import apiRoutes from '../../src/apiRoutes';
 import { useAuth } from '../../context/AuthContext';
+import ToastComponent from '../../components/ToastComponent';
 
 export default function SettingsScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateStoredUser } = useAuth();
   const insets = useSafeAreaInsets();
   const appVersion = Constants.expoConfig?.version || '1.0.0';
+  const [name, setName] = useState(user?.name || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+
+  useEffect(() => {
+    setName(user?.name || '');
+    setPhone(user?.phone || '');
+  }, [user?.name, user?.phone]);
 
   const initials = useMemo(() => {
     const source = user?.name || 'Admin';
@@ -19,6 +30,37 @@ export default function SettingsScreen() {
 
   const handleLogout = async () => {
     await logout('admin');
+  };
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (payload) => {
+      const res = await apiClient.patch(apiRoutes.AUTH.UPDATE_PROFILE, payload);
+      return res.data;
+    },
+    onSuccess: async (data) => {
+      await updateStoredUser(data.user);
+      ToastComponent('Success', data.message);
+    },
+    onError: (error) => {
+      ToastComponent('Error', error?.response?.data?.message || 'Failed to update profile');
+    },
+  });
+
+  const handleUpdateProfile = () => {
+    const trimmedName = name.trim();
+    const trimmedPhone = phone.trim();
+
+    if (!trimmedName) {
+      ToastComponent('Error', 'Please enter full name.');
+      return;
+    }
+
+    if (!/^\d{10}$/.test(trimmedPhone)) {
+      ToastComponent('Error', 'Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
+    updateProfileMutation.mutate({ name: trimmedName, phone: trimmedPhone });
   };
 
   return (
@@ -69,6 +111,35 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        <View style={{ padding: 18, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', gap: 14, marginBottom: 18 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+            <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: 'rgba(139,92,246,0.12)', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+              <Feather name="edit-3" size={17} color="#c495ff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900' }}>Update profile</Text>
+              <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 3 }}>Update your administrator name and mobile number.</Text>
+            </View>
+          </View>
+
+          <ProfileInput icon="user" label="Name" value={name} onChangeText={setName} placeholder="Full name" />
+          <ProfileInput icon="phone" label="Mobile" value={phone} onChangeText={setPhone} placeholder="10-digit mobile number" keyboardType="phone-pad" />
+
+          <TouchableOpacity onPress={handleUpdateProfile} disabled={updateProfileMutation.isPending}>
+            <LinearGradient
+              colors={['#8B5CF6', '#6D28D9']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{ height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' }}
+            >
+              <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900', marginRight: 8 }}>
+                {updateProfileMutation.isPending ? 'Updating...' : 'Update profile'}
+              </Text>
+              {!updateProfileMutation.isPending && <Feather name="check" size={18} color="#fff" />}
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+
         <InfoRow icon="info" title="App version" value={`v${appVersion}`} />
 
         <TouchableOpacity
@@ -91,6 +162,22 @@ export default function SettingsScreen() {
           <Text style={{ flex: 1, color: '#EF4444', fontSize: 15, fontWeight: '900' }}>Logout</Text>
         </TouchableOpacity>
       </ScrollView>
+    </View>
+  );
+}
+
+function ProfileInput({ icon, label, ...props }) {
+  return (
+    <View>
+      <Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginLeft: 2 }}>{label}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', height: 52, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 15 }}>
+        <Feather name={icon} size={17} color="rgba(255,255,255,0.48)" />
+        <TextInput
+          {...props}
+          placeholderTextColor="rgba(255,255,255,0.26)"
+          style={{ flex: 1, color: '#fff', fontSize: 15, marginLeft: 12 }}
+        />
+      </View>
     </View>
   );
 }

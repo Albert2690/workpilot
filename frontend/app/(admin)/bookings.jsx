@@ -3,7 +3,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as ImagePicker from 'expo-image-picker';
@@ -29,7 +29,8 @@ const addBooking = async ({
   works,
   selectedImages,
   selectedEmployee,
-  estimateAmount
+  estimateAmount,
+  clientRequestId,
 }) => {
   try {
     const formData = new FormData();
@@ -42,9 +43,10 @@ const addBooking = async ({
     formData.append("complaintType", complaintType);
     formData.append("description", works);
     formData.append("estimateAmount", estimateAmount);
+    formData.append("clientRequestId", clientRequestId);
 
     if (selectedEmployee) {
-      formData.append("assignedTo", selectedEmployee?._id);
+      formData.append("assignedTo", selectedEmployee._id);
     }
 
     // Images
@@ -80,18 +82,20 @@ export default function BookingsScreen() {
   const [complaintType, setComplaintType] = useState('Low'); // Major, Minor, Low
   const [works, setWorks] = useState('');
   const [estimateAmount, setEstimateAmount] = useState('');
-  const [time, setTime] = useState('');
   const [selectedImages, setSelectedImages] = useState([]);
+  const submitLockRef = useRef(false);
 
   const { mutate, isPending } = useMutation({
     mutationFn: addBooking,
     onSuccess: (data) => {
       console.log(data)
+      submitLockRef.current = false;
       resetForm()
       setIsAddModalVisible(false)
       refetchBookings()
     },
     onError: (err) => {
+      submitLockRef.current = false;
       console.log(err)
       ToastComponent("Error", err?.response?.data?.message || "Failed to create booking");
     }
@@ -117,6 +121,9 @@ export default function BookingsScreen() {
       return res.data.employees;
     }
   });
+
+  const brandsList = Array.isArray(brandsData) ? brandsData : [];
+  const employeesList = Array.isArray(employeesData) ? employeesData : [];
 
   const { data: bookingsList, refetch: refetchBookings } = useQuery({
     queryKey: ['bookings'],
@@ -154,20 +161,31 @@ export default function BookingsScreen() {
     setOpenId(prev => (prev === id ? null : id));
   };
 
-  const pickImage = async () => {
-    if (selectedImages.length >= 2) {
-      Alert.alert("Limit Reached", "You can only upload up to 2 images per booking.");
+  const handleLaunchCamera = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      ToastComponent('Permission Denied', 'Camera permission is required to take photos.');
       return;
     }
 
-    // Permission check
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setSelectedImages((current) => [...current, ...result.assets].slice(0, 2));
+    }
+  };
+
+  const handleLaunchGallery = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
+      ToastComponent('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
       return;
     }
 
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsMultipleSelection: true,
       selectionLimit: 2 - selectedImages.length,
@@ -175,10 +193,26 @@ export default function BookingsScreen() {
     });
 
     if (!result.canceled) {
-      const totalImages = [...selectedImages, ...result.assets].slice(0, 2);
-
-      setSelectedImages(totalImages);
+      setSelectedImages((current) => [...current, ...result.assets].slice(0, 2));
     }
+  };
+
+  const pickImage = () => {
+    if (selectedImages.length >= 2) {
+      ToastComponent("Limit Reached", "You can only upload up to 2 images per booking.");
+      return;
+    }
+
+    Alert.alert(
+      'Select Image Source',
+      'Choose how you want to upload the before-work image',
+      [
+        { text: 'Take Photo', onPress: handleLaunchCamera },
+        { text: 'Choose from Gallery', onPress: handleLaunchGallery },
+        { text: 'Cancel', style: 'cancel' }
+      ],
+      { cancelable: true }
+    );
   };
 
   const removeImage = (index) => {
@@ -194,13 +228,17 @@ export default function BookingsScreen() {
     setSelectedEmployee(null);
     setComplaintType('Low');
     setWorks('');
-    setTime('');
+    setEstimateAmount('');
     setSelectedImages([]);
     setIsBrandModalOpen(false);
     setIsEmployeeModalOpen(false);
   };
 
   const handleCreateBooking = () => {
+    if (submitLockRef.current || isPending) {
+      return;
+    }
+
     const phoneRegex = /^[0-9]{10}$/;
     
     if (!vehicleName.trim()) {
@@ -244,21 +282,21 @@ export default function BookingsScreen() {
       return;
     }
 
-    console.log("Creating booking with:", {
-      vehicleName, vehicleNum, customerName, customerNum, selectedBrand, selectedEmployee, complaintType, works, estimateAmount, selectedImages
-    });
+    submitLockRef.current = true;
+    const clientRequestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
     mutate({
-      vehicleName,
-      vehicleNum,
-      customerName,
-      customerNum,
+      vehicleName: vehicleName.trim(),
+      vehicleNum: vehicleNum.trim(),
+      customerName: customerName.trim(),
+      customerNum: customerNum.trim(),
       selectedBrand,
       selectedEmployee,
       complaintType,
-      works,
+      works: works.trim(),
       estimateAmount,
-      selectedImages
+      selectedImages,
+      clientRequestId,
     });
   };
 
@@ -540,7 +578,7 @@ export default function BookingsScreen() {
                           style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
                         >
                           <Text style={{ color: selectedBrand ? '#fff' : 'rgba(255,255,255,0.2)' }}>
-                            {brandsData?.find(b => b._id === selectedBrand)?.brandName || "Select Vehicle Brand"}
+                            {(brandsList.find((brand) => brand._id === selectedBrand) || {}).brandName || "Select Vehicle Brand"}
                           </Text>
                           <Feather name="chevron-down" size={18} color="rgba(255,255,255,0.4)" />
                         </TouchableOpacity>
@@ -626,7 +664,8 @@ export default function BookingsScreen() {
 
                   <TouchableOpacity
                     onPress={handleCreateBooking}
-                    style={{ marginTop: 8 }}
+                    disabled={isPending || submitLockRef.current}
+                    style={{ marginTop: 8, opacity: isPending || submitLockRef.current ? 0.65 : 1 }}
                   >
                     <LinearGradient
                       colors={['#8B5CF6', '#6D28D9']}
@@ -634,7 +673,7 @@ export default function BookingsScreen() {
                       end={{ x: 1, y: 0 }}
                       style={{ borderRadius: 18, paddingVertical: 18, alignItems: 'center', shadowColor: '#8B5CF6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 }}
                     >
-                      <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Create Booking</Text>
+                      <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{isPending || submitLockRef.current ? 'Creating...' : 'Create Booking'}</Text>
                     </LinearGradient>
                   </TouchableOpacity>
                 </View>
@@ -681,7 +720,7 @@ export default function BookingsScreen() {
 
             <ScrollView showsVerticalScrollIndicator={false}>
               <View style={{ gap: 12 }}>
-                {brandsData?.map((brand) => {
+                {brandsList.map((brand) => {
                   const isSelected = selectedBrand === brand._id;
                   return (
                     <TouchableOpacity
@@ -762,50 +801,15 @@ export default function BookingsScreen() {
 
             <ScrollView showsVerticalScrollIndicator={false}>
               <View style={{ gap: 12 }}>
-                {/* Option for Unassigned */}
-                <TouchableOpacity
-                  onPress={() => {
-                    setSelectedEmployee(null);
-                    setIsEmployeeModalOpen(false);
-                  }}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    backgroundColor: !selectedEmployee ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.03)',
-                    padding: 16,
-                    borderRadius: 20,
-                    borderWidth: 1,
-                    borderColor: !selectedEmployee ? '#8B5CF6' : 'rgba(255,255,255,0.08)',
-                  }}
-                >
-                  <LinearGradient
-                    colors={!selectedEmployee ? ['#8B5CF6', '#6D28D9'] : ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.02)']}
-                    style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginRight: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}
-                  >
-                    <Feather name="user-minus" size={16} color={!selectedEmployee ? '#fff' : '#c495ff'} />
-                  </LinearGradient>
-                  
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>Unassigned</Text>
-                    <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 2 }}>Leave unassigned</Text>
-                  </View>
-
-                  {!selectedEmployee && (
-                    <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#8B5CF6', alignItems: 'center', justifyContent: 'center' }}>
-                      <Feather name="check" size={14} color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-
-                {employeesData?.map((emp) => {
-                  const isSelected = selectedEmployee?._id === emp._id;
+                {employeesList.map((emp) => {
+                  const isSelected = selectedEmployee && selectedEmployee._id === emp._id;
                   return (
                     <TouchableOpacity
                       key={emp._id}
                       onPress={() => {
                         setSelectedEmployee(emp);
                         setIsEmployeeModalOpen(false);
-                        Alert.alert("Employee Selected", "You can now upload up to 3 images (max 2 from gallery recommended).");
+                        ToastComponent("Employee Selected", "You can now upload up to 3 images (max 2 from gallery recommended).");
                       }}
                       style={{
                         flexDirection: 'row',

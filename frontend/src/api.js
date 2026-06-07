@@ -1,10 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
+import { create } from "axios";
 
 // export const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:7007/api";
 export const BASE_URL = "https://workpilot-mqlo.onrender.com/api";
 
-const apiClient = axios.create({
+const apiClient = create({
   baseURL: BASE_URL,
   timeout: 10000,
 });
@@ -17,7 +17,7 @@ apiClient.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
       return config;
-    } catch (error) {
+    } catch (_error) {
       return config;
     }
   },

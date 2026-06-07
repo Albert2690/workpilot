@@ -2,6 +2,7 @@ const apiRoutes = {
   AUTH: {
     LOGIN: "/common/login",
     PROFILE: "/common/profile",
+    UPDATE_PROFILE: "/common/profile",
   },
 
   ADMIN: {
@@ -15,9 +16,14 @@ const apiRoutes = {
     GET_EMPLOYEES: "/admin/employees",
     CREATE_EMPLOYEE: "/admin/employee/create",
     UPDATE_EMPLOYEE: "/admin/employee",
+    DELETE_EMPLOYEE: "/admin/employee",
 
     CREATE_BRAND: "/admin/brand/create",
     GET_BRANDS: "/admin/brands",
+
+    CREATE_PAYROLL: "/admin/payroll/create",
+    GET_EMPLOYEE_PAYROLLS: "/admin/payroll/employee",
+    DELETE_PAYROLL: "/admin/payroll",
   },
 
   EMPLOYEE: {

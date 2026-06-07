@@ -67,6 +67,10 @@ const bookingSchema = new mongoose.Schema(
       enum: ["cash", "online"],
     },
 
+    clientRequestId: {
+      type: String,
+    },
+
     status: {
       type: String,
       enum: ["pending", "assigned", "in_progress", "completed"],
@@ -89,6 +93,11 @@ const bookingSchema = new mongoose.Schema(
     completedAt: Date,
   },
   { timestamps: true }
+);
+
+bookingSchema.index(
+  { createdBy: 1, clientRequestId: 1 },
+  { unique: true, sparse: true }
 );
 
 export default mongoose.model("Booking", bookingSchema);

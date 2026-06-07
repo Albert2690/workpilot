@@ -132,10 +132,11 @@ export default function DashboardScreen() {
               </View>
             ) : (
               <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
-                <StatCard icon="calendar" label="Bookings" value={stats.totalBookings || 0} />
-                <StatCard icon="check-circle" label="Completed" value={stats.completedBookings || 0} tone="#10b981" />
-                <StatCard icon="clock" label="Pending" value={(stats.pendingBookings || 0) + (stats.assignedBookings || 0) + (stats.inProgressBookings || 0)} tone="#f59e0b" />
-                <StatCard icon="dollar-sign" label="Revenue" value={`₹${Number(stats.totalRevenue || 0).toLocaleString('en-IN')}`} />
+                <StatCard icon="calendar" label="Total bookings" value={stats.totalBookings || 0} />
+                <StatCard icon="dollar-sign" label="Total collection" value={`₹${Number(stats.totalCollection || 0).toLocaleString('en-IN')}`} tone="#10b981" />
+                <StatCard icon="calendar" label="Today's bookings" value={stats.todayBookings || 0} tone="#3b82f6" />
+                <StatCard icon="clock" label="Total pending" value={stats.totalPending || 0} tone="#f59e0b" />
+                <StatCard icon="credit-card" label="Today's collection" value={`₹${Number(stats.todayCollection || 0).toLocaleString('en-IN')}`} tone="#c495ff" />
               </View>
             )}
           </View>
@@ -170,9 +171,9 @@ export default function DashboardScreen() {
 function StatCard({ icon, label, value, tone = '#c495ff' }) {
   return (
     <View style={{ flexGrow: 1, flexBasis: '47%', padding: 18, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.03)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }}>
-      <View style={{ width: 44, height: 44, borderRadius: 16, backgroundColor: 'rgba(139,92,246,0.15)', alignItems: 'center', justifyContent: 'center', marginBottom: 14, borderWidth: 1, borderColor: 'rgba(139,92,246,0.2)' }}>
+      {/* <View style={{ width: 44, height: 44, borderRadius: 16, backgroundColor: 'rgba(139,92,246,0.15)', alignItems: 'center', justifyContent: 'center', marginBottom: 14, borderWidth: 1, borderColor: 'rgba(139,92,246,0.2)' }}>
         <Feather name={icon} size={20} color={tone} />
-      </View>
+      </View> */}
       <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Text>
       <Text numberOfLines={1} adjustsFontSizeToFit style={{ color: '#fff', fontSize: 26, fontWeight: '800', marginTop: 4 }}>{value}</Text>
     </View>

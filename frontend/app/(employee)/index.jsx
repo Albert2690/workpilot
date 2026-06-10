@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';

@@ -1,11 +1,10 @@
-import { Alert, View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Platform, Pressable } from 'react-native';
+import { Alert, View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Platform, Pressable, RefreshControl } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
-import { useRef, useState } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { router } from 'expo-router';
 import apiClient from '../../src/api';
 import apiRoutes from '../../src/apiRoutes';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -81,12 +80,19 @@ export default function EmployeesScreen() {
     setBaseSalary(employee.baseSalary?.toString() || '');
     setModalVisible(true);
   };
-  const {data}  = useQuery({
+  const {data, refetch}  = useQuery({
     queryKey:["employees"],
     queryFn:fetchEmployees,
   });
 
   const employeesList = data?.employees || [];
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
 	  const {mutate,isPending}= useMutation({
 	    mutationFn:createEmployeess,
@@ -193,6 +199,14 @@ export default function EmployeesScreen() {
       <ScrollView 
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 140 }} 
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#c495ff"
+            colors={['#c495ff']}
+          />
+        }
       >
         {employeesList.length === 0 ? (
           <View style={{ alignItems: 'center', marginTop: 40 }}>
@@ -231,12 +245,7 @@ export default function EmployeesScreen() {
               </View>
 
               <View style={{ flexDirection: 'row' }}>
-                <TouchableOpacity 
-                  onPress={() => router.push(`/payroll/${emp._id}?name=${encodeURIComponent(emp.name)}&salary=${emp.baseSalary || 0}`)}
-                  style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}
-                >
-                  <Feather name="dollar-sign" size={16} color="#4ade80" />
-                </TouchableOpacity>
+               
 
                 <TouchableOpacity 
                   onPress={() => openEditModal(emp)}

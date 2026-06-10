@@ -2,14 +2,15 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser"; 
 import { connecDb } from "./config/Db.js";
-
+import dotenv from "dotenv"
+dotenv.config();
 // Routes
 import commonRoutes from "./routes/common/routes.js";
 import adminRoutes from "./routes/admin/routes.js";
 import userRoutes from "./routes/user/routes.js";
 
 const app = express();
-const port = 7007;
+const port = process.env.PORT|| 7007;
 
 // Connect to database
 connecDb();

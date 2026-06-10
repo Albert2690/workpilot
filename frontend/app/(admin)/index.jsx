@@ -1,7 +1,7 @@
-import { View, Text, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Animated, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
-import { useRef, useEffect, useMemo, useState } from 'react';
+import { useRef, useEffect, useMemo, useState, useCallback } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { CalendarProvider, WeekCalendar } from 'react-native-calendars';
@@ -20,6 +20,7 @@ const fetchDashboard = async (date) => {
 
 export default function DashboardScreen() {
   const [selectedDate, setSelectedDate] = useState(toDateKey());
+  const [refreshing, setRefreshing] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
 
@@ -42,6 +43,12 @@ export default function DashboardScreen() {
       dotColor: '#fff',
     },
   }), [data?.markedDates, selectedDate]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -66,6 +73,14 @@ export default function DashboardScreen() {
         className="flex-1"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: insets.top }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#c495ff"
+            colors={['#c495ff']}
+          />
+        }
       >
         <Animated.View style={{ opacity: fadeAnim }}>
           <View style={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>

@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Pressable, Platform, Alert, RefreshControl, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Pressable, Platform, Alert, ActivityIndicator } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -15,7 +15,6 @@ import {
   EmployeeShell,
   EmptyState,
   ScreenHeader,
-  SkeletonBlock,
   employeeTheme,
 } from '../../components/employee/EmployeeUI';
 

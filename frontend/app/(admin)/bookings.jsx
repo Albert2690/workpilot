@@ -1,9 +1,9 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput, LayoutAnimation, Platform, UIManager, Modal, Pressable, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, LayoutAnimation, Platform, UIManager, Modal, Pressable, Alert, RefreshControl } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { useRef, useState } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as ImagePicker from 'expo-image-picker';
@@ -106,7 +106,7 @@ export default function BookingsScreen() {
   const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
 
   // Queries
-  const { data: brandsData } = useQuery({
+  const { data: brandsData, refetch: refetchBrands } = useQuery({
     queryKey: ['brands'],
     queryFn: async () => {
       const res = await apiClient.get(apiRoutes.ADMIN.GET_BRANDS);
@@ -114,7 +114,7 @@ export default function BookingsScreen() {
     }
   });
 
-  const { data: employeesData } = useQuery({
+  const { data: employeesData, refetch: refetchEmployees } = useQuery({
     queryKey: ['employees'],
     queryFn: async () => {
       const res = await apiClient.get(apiRoutes.ADMIN.GET_EMPLOYEES);
@@ -124,6 +124,7 @@ export default function BookingsScreen() {
 
   const brandsList = Array.isArray(brandsData) ? brandsData : [];
   const employeesList = Array.isArray(employeesData) ? employeesData : [];
+  const [refreshing, setRefreshing] = useState(false);
 
   const { data: bookingsList, refetch: refetchBookings } = useQuery({
     queryKey: ['bookings'],
@@ -132,6 +133,12 @@ export default function BookingsScreen() {
       return res.data.bookings;
     }
   });
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([refetchBookings(), refetchBrands(), refetchEmployees()]);
+    setRefreshing(false);
+  }, [refetchBookings, refetchBrands, refetchEmployees]);
 
   const statuses = ['All', 'Pending', 'Assigned', 'In Progress', 'Completed'];
 
@@ -383,6 +390,14 @@ export default function BookingsScreen() {
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#c495ff"
+            colors={['#c495ff']}
+          />
+        }
       >
         {filteredBookings.length === 0 ? (
           <View style={{ alignItems: 'center', marginTop: 48 }}>

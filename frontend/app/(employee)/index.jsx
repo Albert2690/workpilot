@@ -29,7 +29,7 @@ export default function EmployeeDashboard() {
   const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data, isLoading, isError, refetch } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['employee-bookings'],
     queryFn: fetchAssignedBookings,
   });
@@ -72,7 +72,7 @@ export default function EmployeeDashboard() {
         </View>
       ) : null}
 
-      {isLoading ? (
+      {isLoading || isFetching ? (
         <View style={{ gap: 12 }}>
           <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
             {[1, 2, 3, 4].map((item) => <SkeletonBlock key={item} height={128} width="47%" />)}
@@ -87,7 +87,7 @@ export default function EmployeeDashboard() {
             <SummaryCard icon="calendar" label="Total bookings" value={total} />
             <SummaryCard icon="check-circle" label="Completed" value={completed} tone="success" />
             <SummaryCard icon="clock" label="Pending" value={pending} tone="warning" />
-            <SummaryCard icon="credit-card" label="Earnings" value={currency(earnings)} />
+            {/* <SummaryCard icon="credit-card" label="Earnings" value={currency(earnings)} /> */}
           </View>
 
           <SectionHeader title="Status overview" />

@@ -112,7 +112,7 @@ export default function SettingsScreen() {
         </View>
 
         <View style={{ padding: 18, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', gap: 14, marginBottom: 18 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+          {/* <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
             <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: 'rgba(139,92,246,0.12)', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
               <Feather name="edit-3" size={17} color="#c495ff" />
             </View>
@@ -120,12 +120,12 @@ export default function SettingsScreen() {
               <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900' }}>Update profile</Text>
               <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 3 }}>Update your administrator name and mobile number.</Text>
             </View>
-          </View>
+          </View> */}
 
           <ProfileInput icon="user" label="Name" value={name} onChangeText={setName} placeholder="Full name" />
           <ProfileInput icon="phone" label="Mobile" value={phone} onChangeText={setPhone} placeholder="10-digit mobile number" keyboardType="phone-pad" />
 
-          <TouchableOpacity onPress={handleUpdateProfile} disabled={updateProfileMutation.isPending}>
+          {/* <TouchableOpacity onPress={handleUpdateProfile} disabled={updateProfileMutation.isPending}>
             <LinearGradient
               colors={['#8B5CF6', '#6D28D9']}
               start={{ x: 0, y: 0 }}
@@ -137,7 +137,7 @@ export default function SettingsScreen() {
               </Text>
               {!updateProfileMutation.isPending && <Feather name="check" size={18} color="#fff" />}
             </LinearGradient>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         <InfoRow icon="info" title="App version" value={`v${appVersion}`} />
@@ -169,10 +169,11 @@ export default function SettingsScreen() {
 function ProfileInput({ icon, label, ...props }) {
   return (
     <View>
-      <Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginLeft: 2 }}>{label}</Text>
+      <Text editable={false} style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginLeft: 2 }}>{label}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', height: 52, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 15 }}>
         <Feather name={icon} size={17} color="rgba(255,255,255,0.48)" />
         <TextInput
+          editable={false}
           {...props}
           placeholderTextColor="rgba(255,255,255,0.26)"
           style={{ flex: 1, color: '#fff', fontSize: 15, marginLeft: 12 }}

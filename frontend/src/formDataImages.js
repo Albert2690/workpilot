@@ -11,6 +11,11 @@ export const appendImageToFormData = async (formData, fieldName, image, index, p
   const fileName = image.fileName || `${prefix}_${index + 1}.${extensionFromMime(mimeType)}`;
 
   if (Platform.OS === 'web') {
+    if (image.file) {
+      formData.append(fieldName, image.file, fileName);
+      return;
+    }
+
     const response = await fetch(image.uri);
     const blob = await response.blob();
     formData.append(fieldName, blob, fileName);

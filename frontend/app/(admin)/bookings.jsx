@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput, LayoutAnimation, Platform, UIManager, Modal, Pressable, Alert, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, LayoutAnimation, Platform, UIManager, Modal, Pressable, Alert, RefreshControl, ActivityIndicator } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
@@ -54,7 +54,9 @@ const addBooking = async ({
       await appendImageToFormData(formData, "beforeImages", selectedImages[i], i, "before_work");
     }
 
-    const res = await apiClient.post(apiRoutes.ADMIN.CREATE_BOOKING, formData);
+    const res = await apiClient.post(apiRoutes.ADMIN.CREATE_BOOKING, formData, {
+      timeout: 120000,
+    });
 
     return res.data;
 
@@ -106,7 +108,7 @@ export default function BookingsScreen() {
   const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
 
   // Queries
-  const { data: brandsData, refetch: refetchBrands } = useQuery({
+  const { data: brandsData, refetch: refetchBrands, isLoading: isBrandsLoading, isFetching: isBrandsFetching } = useQuery({
     queryKey: ['brands'],
     queryFn: async () => {
       const res = await apiClient.get(apiRoutes.ADMIN.GET_BRANDS);
@@ -114,7 +116,7 @@ export default function BookingsScreen() {
     }
   });
 
-  const { data: employeesData, refetch: refetchEmployees } = useQuery({
+  const { data: employeesData, refetch: refetchEmployees, isLoading: isEmployeesLoading, isFetching: isEmployeesFetching } = useQuery({
     queryKey: ['employees'],
     queryFn: async () => {
       const res = await apiClient.get(apiRoutes.ADMIN.GET_EMPLOYEES);
@@ -126,13 +128,21 @@ export default function BookingsScreen() {
   const employeesList = Array.isArray(employeesData) ? employeesData : [];
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data: bookingsList, refetch: refetchBookings } = useQuery({
+  const { data: bookingsList, refetch: refetchBookings, isLoading: isBookingsLoading, isFetching: isBookingsFetching } = useQuery({
     queryKey: ['bookings'],
     queryFn: async () => {
       const res = await apiClient.get(apiRoutes.ADMIN.GET_ALL_BOOKINGS);
       return res.data.bookings;
     }
   });
+
+  const isPageLoading =
+    isBookingsLoading ||
+    isBookingsFetching ||
+    isBrandsLoading ||
+    isBrandsFetching ||
+    isEmployeesLoading ||
+    isEmployeesFetching;
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -167,6 +177,21 @@ export default function BookingsScreen() {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setOpenId(prev => (prev === id ? null : id));
   };
+
+  if (isPageLoading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0f0220' }}>
+        <StatusBar style="light" />
+        <LinearGradient
+          colors={['#0f0220', '#1a0533', '#0f0220']}
+          style={{ position: 'absolute', inset: 0 }}
+        />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator color="#c495ff" size="large" />
+        </View>
+      </View>
+    );
+  }
 
   const handleLaunchCamera = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -207,6 +232,11 @@ export default function BookingsScreen() {
   const pickImage = () => {
     if (selectedImages.length >= 2) {
       ToastComponent("Limit Reached", "You can only upload up to 2 images per booking.");
+      return;
+    }
+
+    if (Platform.OS === 'web') {
+      handleLaunchGallery();
       return;
     }
 

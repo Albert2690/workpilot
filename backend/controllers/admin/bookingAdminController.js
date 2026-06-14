@@ -96,10 +96,10 @@ export const createBooking = async (req, res) => {
       return res.status(400).json({ success: false, message: "Exactly 2 before-work images are required" });
     }
 
-    for (const file of req.files) {
-      const imageUrl = await uploadToCloudinary(file.buffer, "workpilot/before-images");
-      beforeImages.push(imageUrl);
-    }
+    const uploadResults = await Promise.all(
+      req.files.map((file) => uploadToCloudinary(file.buffer, "workpilot/before-images"))
+    );
+    beforeImages.push(...uploadResults);
 
     const booking = await Booking.create({
       customerName, phone, vehicleBrand, vehicleName, 

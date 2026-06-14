@@ -85,7 +85,7 @@ export default function EmployeeProfile() {
       </View>
 
       <View style={{ padding: 18, borderRadius: 24, backgroundColor: employeeTheme.panel, borderWidth: 1, borderColor: employeeTheme.border, gap: 14, marginBottom: 18 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+        {/* <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
           <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: 'rgba(139,92,246,0.12)', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
             <Feather name="edit-3" size={17} color={employeeTheme.accent} />
           </View>
@@ -93,12 +93,12 @@ export default function EmployeeProfile() {
             <Text style={{ color: employeeTheme.text, fontSize: 15, fontWeight: '900' }}>Update profile</Text>
             <Text style={{ color: employeeTheme.muted, fontSize: 12, marginTop: 3 }}>Changing mobile resets your password to the new mobile number.</Text>
           </View>
-        </View>
+        </View> */}
 
         <ProfileInput icon="user" label="Name" value={name} onChangeText={setName} placeholder="Full name" />
         <ProfileInput icon="phone" label="Mobile" value={phone} onChangeText={setPhone} placeholder="10-digit mobile number" keyboardType="phone-pad" />
 
-        <TouchableOpacity onPress={handleUpdateProfile} disabled={updateProfileMutation.isPending}>
+        {/* <TouchableOpacity onPress={handleUpdateProfile} disabled={updateProfileMutation.isPending}>
           <LinearGradient
             colors={['#8B5CF6', '#6D28D9']}
             start={{ x: 0, y: 0 }}
@@ -110,7 +110,7 @@ export default function EmployeeProfile() {
             </Text>
             {!updateProfileMutation.isPending && <Feather name="check" size={18} color={employeeTheme.text} />}
           </LinearGradient>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       <View style={{ padding: 16, borderRadius: 20, backgroundColor: employeeTheme.panel, borderWidth: 1, borderColor: employeeTheme.border, marginBottom: 18, flexDirection: 'row', alignItems: 'center' }}>
@@ -137,11 +137,12 @@ export default function EmployeeProfile() {
 function ProfileInput({ icon, label, ...props }) {
   return (
     <View>
-      <Text style={{ color: employeeTheme.faint, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginLeft: 2 }}>{label}</Text>
+      <Text editable={false} style={{ color: employeeTheme.faint, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginLeft: 2 }}>{label}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', height: 52, borderRadius: 16, backgroundColor: employeeTheme.panelStrong, borderWidth: 1, borderColor: employeeTheme.border, paddingHorizontal: 15 }}>
         <Feather name={icon} size={17} color={employeeTheme.muted} />
         <TextInput
           {...props}
+          editable={false}
           placeholderTextColor="rgba(255,255,255,0.26)"
           style={{ flex: 1, color: employeeTheme.text, fontSize: 15, marginLeft: 12 }}
         />

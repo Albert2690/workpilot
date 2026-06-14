@@ -1,4 +1,4 @@
-import { Alert, View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Platform, Pressable, RefreshControl } from 'react-native';
+import { Alert, View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Platform, Pressable, RefreshControl, ActivityIndicator } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
@@ -80,7 +80,7 @@ export default function EmployeesScreen() {
     setBaseSalary(employee.baseSalary?.toString() || '');
     setModalVisible(true);
   };
-  const {data, refetch}  = useQuery({
+  const {data, refetch,isLoading,isFetching}  = useQuery({
     queryKey:["employees"],
     queryFn:fetchEmployees,
   });
@@ -177,6 +177,21 @@ export default function EmployeesScreen() {
       ]
     );
   };
+
+  if (isLoading || isFetching) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0f0220' }}>
+        <StatusBar style="light" />
+        <LinearGradient
+          colors={['#0f0220', '#1a0533', '#0f0220']}
+          style={{ position: 'absolute', inset: 0 }}
+        />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator color="#c495ff" size="large" />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: '#0f0220' }}>

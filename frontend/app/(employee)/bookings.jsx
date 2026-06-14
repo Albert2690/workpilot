@@ -55,7 +55,7 @@ export default function EmployeeBookings() {
   const [afterImages, setAfterImages] = useState([]);
   const [previewImage, setPreviewImage] = useState(null);
 
-  const { data: bookings = [], isLoading, isError, refetch } = useQuery({
+  const { data: bookings = [], isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['employee-bookings'],
     queryFn: fetchAssignedBookings,
   });
@@ -174,6 +174,11 @@ export default function EmployeeBookings() {
       return;
     }
 
+    if (Platform.OS === 'web') {
+      handleLaunchGallery();
+      return;
+    }
+
     Alert.alert(
       'Select Image Source',
       'Choose how you want to upload the after-work image',
@@ -275,7 +280,7 @@ export default function EmployeeBookings() {
       </ScrollView>
 
       <View style={{ paddingHorizontal: 24 }}>
-        {isLoading ? (
+        {isLoading || isFetching ? (
           <View style={{ paddingVertical: 40, alignItems: 'center', justifyContent: 'center' }}>
             <ActivityIndicator size="large" color={employeeTheme.accent} />
           </View>

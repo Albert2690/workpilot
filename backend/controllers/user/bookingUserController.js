@@ -47,12 +47,12 @@ export const completeBooking = async (req, res) => {
     }
 
     const afterImages = [];
-    if (!req.files?.length) {
-      return res.status(400).json({ success: false, message: "Please upload 2 after-work images" });
-    }
-    if (req.files.length !== 2) {
-      return res.status(400).json({ success: false, message: "Exactly 2 after-work images are required" });
-    }
+    // if (!req.files?.length) {
+    //   return res.status(400).json({ success: false, message: "Please upload 2 after-work images" });
+    // }
+    // if (req.files.length !== 2) {
+    //   return res.status(400).json({ success: false, message: "Exactly 2 after-work images are required" });
+    // }
 
     for (const file of req.files) {
       const imageUrl = await uploadToCloudinary(file.buffer, "workpilot/after-images");

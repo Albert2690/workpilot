@@ -201,10 +201,10 @@ export default function EmployeeBookings() {
       ToastComponent('Final Amount Required', 'Enter a valid final amount.');
       return;
     }
-    if (afterImages.length !== 2) {
-      ToastComponent('Images Required', 'Please upload exactly 2 after-work images.');
-      return;
-    }
+    // if (afterImages.length !== 2) {
+    //   ToastComponent('Images Required', 'Please upload exactly 2 after-work images.');
+    //   return;
+    // }
     if (!['cash', 'online'].includes(paymentMethod)) {
       ToastComponent('Payment Method Required', 'Select cash or online payment.');
       return;
@@ -219,7 +219,7 @@ export default function EmployeeBookings() {
   };
 
   return (
-    <EmployeeShell 
+    <EmployeeShell
       contentStyle={{ paddingHorizontal: 0 }}
       onRefresh={onRefresh}
       refreshing={refreshing}
@@ -466,7 +466,7 @@ function CompleteBookingModal({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' }}>
-        <KeyboardAwareScrollView 
+        <KeyboardAwareScrollView
           contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }}
           keyboardShouldPersistTaps="handled"
           bounces={false}
@@ -477,13 +477,13 @@ function CompleteBookingModal({
           <Pressable style={{ flexGrow: 1, justifyContent: 'flex-end' }} onPress={onClose}>
             <Pressable
               onPress={(event) => event.stopPropagation()}
-              style={{ 
-                backgroundColor: '#1a0533', 
-                borderTopLeftRadius: 30, 
-                borderTopRightRadius: 30, 
-                padding: 24, 
-                paddingBottom: insets.bottom + 24, 
-                borderWidth: 1, 
+              style={{
+                backgroundColor: '#1a0533',
+                borderTopLeftRadius: 30,
+                borderTopRightRadius: 30,
+                padding: 24,
+                paddingBottom: insets.bottom + 24,
+                borderWidth: 1,
                 borderColor: 'rgba(255,255,255,0.1)',
                 width: '100%'
               }}
@@ -546,8 +546,11 @@ function CompleteBookingModal({
 
               <View style={{ marginBottom: 20 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <Text style={{ color: employeeTheme.faint, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8 }}>After Work Images ({afterImages.length}/2)</Text>
-                  <Text style={{ color: employeeTheme.accent, fontSize: 10, fontWeight: '800' }}>Exactly 2 required</Text>
+                  <Text style={{ color: employeeTheme.faint, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8 }}>After Work Images (Optional)</Text>
+                  {/* <Text style={{ color: employeeTheme.accent, fontSize: 10, fontWeight: '800' }}>Exactly 2 required</Text> */}
+                  <Text style={{ color: '#c495ff', fontSize: 10, fontWeight: '600' }}>
+                    Up to 2 images (optional)
+                  </Text>
                 </View>
 
                 <View style={{ flexDirection: 'row', gap: 12 }}>

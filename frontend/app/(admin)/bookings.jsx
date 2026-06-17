@@ -277,7 +277,7 @@ export default function BookingsScreen() {
     }
 
     const phoneRegex = /^[0-9]{10}$/;
-    
+
     if (!vehicleName.trim()) {
       ToastComponent("Error", "Please enter vehicle name.");
       return;
@@ -314,10 +314,10 @@ export default function BookingsScreen() {
       ToastComponent("Error", "Please describe the work to be done.");
       return;
     }
-    if (selectedImages.length !== 2) {
-      ToastComponent("Error", "Please upload exactly 2 before-work images.");
-      return;
-    }
+    // if (selectedImages.length !== 2) {
+    //   ToastComponent("Error", "Please upload exactly 2 before-work images.");
+    //   return;
+    // }
 
     submitLockRef.current = true;
     const clientRequestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -678,9 +678,11 @@ export default function BookingsScreen() {
                   {/* Image Upload Section */}
                   <View>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                      <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.2 }}>Before Work Images ({selectedImages.length}/2)</Text>
+                      <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.2 }}>Before Work Images (Optional)</Text>
                       {selectedEmployee && (
-                        <Text style={{ color: '#c495ff', fontSize: 10, fontWeight: '600' }}>Exactly 2 required</Text>
+                        <Text style={{ color: '#c495ff', fontSize: 10, fontWeight: '600' }}>
+                          Up to 2 images (optional)
+                        </Text>
                       )}
                     </View>
                     <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -790,7 +792,7 @@ export default function BookingsScreen() {
                       >
                         <Feather name="truck" size={16} color={isSelected ? '#fff' : '#c495ff'} />
                       </LinearGradient>
-                      
+
                       <View style={{ flex: 1 }}>
                         <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>{brand.brandName}</Text>
                       </View>
@@ -854,7 +856,7 @@ export default function BookingsScreen() {
                       onPress={() => {
                         setSelectedEmployee(emp);
                         setIsEmployeeModalOpen(false);
-                        ToastComponent("Employee Selected", "You can now upload up to 3 images (max 2 from gallery recommended).");
+                        // ToastComponent("Employee Selected", "You can now upload up to 3 images (max 2 from gallery recommended).");
                       }}
                       style={{
                         flexDirection: 'row',
@@ -874,7 +876,7 @@ export default function BookingsScreen() {
                           {emp.name?.charAt(0)?.toUpperCase()}
                         </Text>
                       </LinearGradient>
-                      
+
                       <View style={{ flex: 1 }}>
                         <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>{emp.name}</Text>
                         <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}>{emp.role || 'employee'}</Text>

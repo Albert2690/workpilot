@@ -377,7 +377,7 @@ export default function EmployeesScreen() {
                   </View>
                 </View>
 
-                <View style={{ marginBottom: 12 }}>
+                {/* <View style={{ marginBottom: 12 }}>
                   <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 12, marginLeft: 4, fontWeight: '700' }}>Base Salary (Optional)</Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 20, paddingHorizontal: 20, height: 60, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}>
                     <Feather name="dollar-sign" size={20} color="rgba(255,255,255,0.4)" />
@@ -390,7 +390,7 @@ export default function EmployeesScreen() {
                       onChangeText={(text) => setBaseSalary(text.replace(/[^0-9]/g, ''))}
                     />
                   </View>
-                </View>
+                </View> */}
 
                 {editingId ? (
                   <View style={{ marginBottom: 28, padding: 12, borderRadius: 14, backgroundColor: 'rgba(245,158,11,0.08)', borderWidth: 1, borderColor: 'rgba(245,158,11,0.18)' }}>

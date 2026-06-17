@@ -86,15 +86,15 @@ export const createBooking = async (req, res) => {
     }
 
     const beforeImages = [];
-    if (!req.files?.length) {
-      return res.status(400).json({ success: false, message: "Please upload 2 before-work images" });
-    }
+    // if (!req.files?.length) {
+    //   return res.status(400).json({ success: false, message: "Please upload 2 before-work images" });
+    // }
     if (req.files?.length > 2) {
       return res.status(400).json({ success: false, message: "Maximum 2 before-work images allowed" });
     }
-    if (req.files.length !== 2) {
-      return res.status(400).json({ success: false, message: "Exactly 2 before-work images are required" });
-    }
+    // if (req.files.length !== 2) {
+    //   return res.status(400).json({ success: false, message: "Exactly 2 before-work images are required" });
+    // }
 
     const uploadResults = await Promise.all(
       req.files.map((file) => uploadToCloudinary(file.buffer, "workpilot/before-images"))
